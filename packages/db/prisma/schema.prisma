@@ -1,0 +1,372 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  AGENT
+  OWNER
+  ADMIN
+}
+
+enum ListingType {
+  RENT
+  SALE
+}
+
+enum PropertyType {
+  ROOM
+  ANNEX
+  HOUSE
+  APARTMENT
+  LAND
+  COMMERCIAL
+}
+
+enum FurnishingLevel {
+  UNFURNISHED
+  SEMI_FURNISHED
+  FURNISHED
+}
+
+enum ListedByType {
+  OWNER
+  AGENT
+  BUILDER
+}
+
+enum AvailabilityStatus {
+  DRAFT
+  PENDING_REVIEW
+  ACTIVE
+  EXPIRED
+  REJECTED
+  ARCHIVED
+}
+
+enum MapPrecision {
+  EXACT
+  APPROXIMATE
+  AREA_ONLY
+}
+
+enum InquiryStatus {
+  NEW
+  CONTACTED
+  CLOSED
+  SPAM
+}
+
+model User {
+  id                String        @id @default(cuid())
+  name              String?
+  email             String        @unique
+  phone             String?       @unique
+  whatsappNumber    String?
+  passwordHash      String?
+  preferredLanguage String?       @default("en")
+  role              UserRole      @default(USER)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  profile           Profile?
+  ownedListings     Listing[]     @relation("OwnedListings")
+  agentListings     Listing[]     @relation("AgentListings")
+  savedListings     SavedListing[]
+  savedSearches     SavedSearch[]
+  inquiries         Inquiry[]
+  guides            Guide[]
+}
+
+model Profile {
+  id            String @id @default(cuid())
+  userId        String @unique
+  avatarUrl     String?
+  bio           String?
+  companyName   String?
+  agencyName    String?
+  licenseNumber String?
+  city          String?
+  district      String?
+  user          User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Location {
+  id               String     @id @default(cuid())
+  district         String
+  city             String?
+  areaName         String
+  slug             String     @unique
+  latitude         Float?
+  longitude        Float?
+  parentLocationId String?
+  isActive         Boolean    @default(true)
+  parent           Location?  @relation("LocationTree", fields: [parentLocationId], references: [id])
+  children         Location[] @relation("LocationTree")
+  listings         Listing[]
+  areaPages        AreaPage[]
+}
+
+model Listing {
+  id                 String             @id @default(cuid())
+  publicId           String             @unique
+  slug               String             @unique
+  title              String
+  description        String
+  propertyType       PropertyType
+  listingType        ListingType
+  priceLkr           Int
+  negotiable         Boolean            @default(false)
+  currency           String             @default("LKR")
+  bedrooms           Int?
+  bathrooms          Int?
+  parkingSlots       Int?
+  floorAreaSqft      Int?
+  landSizePerches    Float?
+  furnishingLevel    FurnishingLevel?
+  availabilityStatus AvailabilityStatus @default(DRAFT)
+  listedByType       ListedByType
+  sourceType         String             @default("DIRECT")
+  ownerUserId        String?
+  agentUserId        String?
+  primaryLocationId  String
+  addressLine        String?
+  latitude           Float?
+  longitude          Float?
+  mapPrecision       MapPrecision       @default(APPROXIMATE)
+  contactName        String?
+  contactPhone       String?
+  contactWhatsapp    String?
+  contactEmail       String?
+  isPhoneVerified    Boolean            @default(false)
+  isWhatsappVerified Boolean            @default(false)
+  isOwnerVerified    Boolean            @default(false)
+  isAgencyVerified   Boolean            @default(false)
+  isFeatured         Boolean            @default(false)
+  qualityScore       Float              @default(0)
+  trustScore         Float              @default(0)
+  freshnessScore     Float              @default(0)
+  priceBandScore     Float              @default(0)
+  viewCount          Int                @default(0)
+  inquiryCount       Int                @default(0)
+  favoriteCount      Int                @default(0)
+  publishedAt        DateTime?
+  expiresAt          DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  deletedAt          DateTime?
+  owner              User?              @relation("OwnedListings", fields: [ownerUserId], references: [id])
+  agent              User?              @relation("AgentListings", fields: [agentUserId], references: [id])
+  primaryLocation    Location           @relation(fields: [primaryLocationId], references: [id])
+  images             ListingImage[]
+  features           ListingFeature[]
+  versions           ListingVersion[]
+  sourceRecords      ListingSourceRecord[]
+  savedByUsers       SavedListing[]
+  inquiries          Inquiry[]
+  verifications      ListingVerification[]
+  reports            Report[]
+  duplicateItems     DuplicateClusterItem[]
+
+  @@index([listingType, propertyType, priceLkr])
+  @@index([primaryLocationId, listingType, propertyType])
+  @@index([availabilityStatus, publishedAt])
+}
+
+model ListingImage {
+  id             String   @id @default(cuid())
+  listingId      String
+  imageUrl       String
+  storageKey     String?
+  altText        String?
+  sortOrder      Int      @default(0)
+  width          Int?
+  height         Int?
+  blurhash       String?
+  perceptualHash String?
+  isPrimary      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  listing        Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+}
+
+model ListingFeature {
+  id           String   @id @default(cuid())
+  listingId    String
+  featureKey   String
+  featureValue String
+  createdAt    DateTime @default(now())
+  listing      Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId, featureKey])
+}
+
+model ListingVersion {
+  id              String   @id @default(cuid())
+  listingId       String
+  versionNumber   Int
+  changedByUserId String?
+  changeSummary   String?
+  snapshotJson    Json
+  createdAt       DateTime @default(now())
+  listing         Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([listingId, versionNumber])
+}
+
+model ListingSourceRecord {
+  id               String   @id @default(cuid())
+  listingId        String
+  sourceName       String
+  sourceExternalId String?
+  sourceUrl        String?
+  rawPayloadJson   Json?
+  importedAt       DateTime @default(now())
+  listing          Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+}
+
+model SavedListing {
+  id        String   @id @default(cuid())
+  userId    String
+  listingId String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, listingId])
+}
+
+model SavedSearch {
+  id               String   @id @default(cuid())
+  userId           String
+  name             String
+  searchParamsJson Json
+  alertEnabled     Boolean  @default(true)
+  alertFrequency   String   @default("daily")
+  lastAlertSentAt  DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Inquiry {
+  id                     String        @id @default(cuid())
+  listingId              String
+  userId                 String?
+  name                   String?
+  email                  String?
+  phone                  String?
+  message                String?
+  preferredContactMethod String?
+  status                 InquiryStatus @default(NEW)
+  source                 String?
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+  listing                Listing       @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  user                   User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model ListingVerification {
+  id                 String   @id @default(cuid())
+  listingId          String
+  verificationType   String
+  verificationStatus String
+  verifiedByUserId   String?
+  notes              String?
+  verifiedAt         DateTime?
+  expiresAt          DateTime?
+  createdAt          DateTime @default(now())
+  listing            Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId, verificationType])
+}
+
+model DuplicateCluster {
+  id               String                 @id @default(cuid())
+  clusterKey       String                 @unique
+  confidenceScore  Float
+  status           String                 @default("PENDING")
+  reviewedByUserId String?
+  reviewedAt       DateTime?
+  createdAt        DateTime               @default(now())
+  items            DuplicateClusterItem[]
+}
+
+model DuplicateClusterItem {
+  id                 String           @id @default(cuid())
+  duplicateClusterId String
+  listingId          String
+  matchScore         Float
+  matchReasonsJson   Json?
+  createdAt          DateTime         @default(now())
+  duplicateCluster   DuplicateCluster @relation(fields: [duplicateClusterId], references: [id], onDelete: Cascade)
+  listing            Listing          @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([duplicateClusterId, listingId])
+}
+
+model Report {
+  id               String   @id @default(cuid())
+  listingId        String
+  reporterUserId   String?
+  reason           String
+  notes            String?
+  status           String   @default("OPEN")
+  createdAt        DateTime @default(now())
+  resolvedAt       DateTime?
+  resolvedByUserId String?
+  listing          Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+}
+
+model AreaPage {
+  id              String   @id @default(cuid())
+  locationId      String
+  pageType        String
+  title           String
+  intro           String?
+  metaTitle       String?
+  metaDescription String?
+  faqJson         Json?
+  statsJson       Json?
+  published       Boolean  @default(false)
+  updatedAt       DateTime @updatedAt
+  location        Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@unique([locationId, pageType])
+}
+
+model Guide {
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  title           String
+  excerpt         String?
+  bodyMd          String
+  metaTitle       String?
+  metaDescription String?
+  authorUserId    String?
+  publishedAt     DateTime?
+  updatedAt       DateTime @updatedAt
+  author          User?    @relation(fields: [authorUserId], references: [id], onDelete: SetNull)
+}
+
+model SearchEvent {
+  id          String   @id @default(cuid())
+  userId      String?
+  sessionId   String?
+  queryText   String?
+  filtersJson Json?
+  resultCount Int?
+  createdAt   DateTime @default(now())
+}
+
+model ListingViewEvent {
+  id        String   @id @default(cuid())
+  listingId String
+  userId    String?
+  sessionId String?
+  source    String?
+  createdAt DateTime @default(now())
+}

@@ -1,0 +1,43 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "allowJs": false,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@property-lk/types": [
+        "packages/types/src/index.ts"
+      ],
+      "@property-lk/validation": [
+        "packages/validation/src/index.ts"
+      ],
+      "@property-lk/search": [
+        "packages/search/src/index.ts"
+      ],
+      "@property-lk/seo": [
+        "packages/seo/src/index.ts"
+      ],
+      "@property-lk/ai": [
+        "packages/ai/src/index.ts"
+      ],
+      "@property-lk/db": [
+        "packages/db/src/index.ts"
+      ],
+      "@property-lk/ui": [
+        "packages/ui/src/index.ts"
+      ]
+    }
+  }
+}
