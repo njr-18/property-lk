@@ -51,9 +51,6 @@
     "test": "tsx --test tests/**/*.test.ts",
     "seed": "prisma db seed"
   },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
-  },
   "dependencies": {
     "@property-lk/search": "workspace:*",
     "@property-lk/types": "workspace:*",

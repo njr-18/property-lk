@@ -43,7 +43,7 @@ export default async function DuplicatesPage({ searchParams }: DuplicatesPagePro
           description="Review explainable duplicate candidates, record an outcome, and leave any merge or cleanup work for a separate manual step."
         />
 
-        <div className="filter-row" aria-label="Duplicate cluster status filters">
+        <nav aria-label="Duplicate cluster status filters" className="filter-row">
           {filters.map((filter) => {
             const href = filter.value ? `/duplicates?status=${filter.value}` : "/duplicates";
             const isActive = filter.value === status || (!filter.value && !status);
@@ -58,7 +58,7 @@ export default async function DuplicatesPage({ searchParams }: DuplicatesPagePro
               </Link>
             );
           })}
-        </div>
+        </nav>
 
         {clusters.length === 0 ? (
           <StatePanel

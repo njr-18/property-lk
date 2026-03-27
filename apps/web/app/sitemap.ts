@@ -7,12 +7,14 @@ import {
 } from "@property-lk/db";
 import { buildAreaPath, buildListingPath, buildSearchPath, buildCanonicalUrl } from "../lib/seo";
 
+export const revalidate = 3600;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [locations, areaSlugs, guides, listings] = await Promise.all([
-    listSeoLocations(100),
-    listAreaPageSlugs(),
-    listPublishedGuideSeoEntries(),
-    listActiveListingSeoEntries()
+    listSeoLocations(100).catch(() => []),
+    listAreaPageSlugs().catch(() => []),
+    listPublishedGuideSeoEntries().catch(() => []),
+    listActiveListingSeoEntries().catch(() => [])
   ]);
 
   return [

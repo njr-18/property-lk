@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { startTransition, useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button, Card, CardContent, CardHeader, CardTitle, Checkbox, Input } from "@property-lk/ui";
 
@@ -30,6 +30,12 @@ export function SaveSearchForm({ isAuthenticated, defaultName }: SaveSearchFormP
 
   const nextPath = searchParams.size > 0 ? `${pathname}?${searchParams.toString()}` : pathname;
 
+  useEffect(() => {
+    if (!isOpen && !savedName) {
+      setName(defaultName);
+    }
+  }, [defaultName, isOpen, savedName]);
+
   async function handleSave() {
     if (!isAuthenticated) {
       router.push(`/login?next=${encodeURIComponent(nextPath)}`);
@@ -40,35 +46,39 @@ export function SaveSearchForm({ isAuthenticated, defaultName }: SaveSearchFormP
     setError(null);
     setNameError(null);
 
-    const response = await fetch("/api/saved-searches", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        name,
-        alertEnabled,
-        searchParams: Object.fromEntries(searchParams.entries())
-      })
-    });
+    try {
+      const response = await fetch("/api/saved-searches", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          name,
+          alertEnabled,
+          searchParams: Object.fromEntries(searchParams.entries())
+        })
+      });
 
-    const payload = (await response.json().catch(() => ({ ok: false }))) as SaveSearchResponse;
+      const payload = (await response.json().catch(() => ({ ok: false }))) as SaveSearchResponse;
 
-    if (!response.ok || !payload.ok) {
-      setError(payload.error ?? "Saved search could not be created.");
-      setNameError(
-        payload.fieldErrors?.find((fieldError) => fieldError.field === "name")?.message ?? null
-      );
+      if (!response.ok || !payload.ok) {
+        setError(payload.error ?? "Saved search could not be created.");
+        setNameError(
+          payload.fieldErrors?.find((fieldError) => fieldError.field === "name")?.message ?? null
+        );
+        return;
+      }
+
+      setSavedName(name.trim());
+      setIsOpen(false);
+      startTransition(() => {
+        router.refresh();
+      });
+    } catch {
+      setError("Saved search could not be created.");
+    } finally {
       setIsPending(false);
-      return;
     }
-
-    setSavedName(name.trim());
-    setIsOpen(false);
-    startTransition(() => {
-      router.refresh();
-    });
-    setIsPending(false);
   }
 
   if (savedName) {
@@ -107,22 +117,29 @@ export function SaveSearchForm({ isAuthenticated, defaultName }: SaveSearchFormP
           <div className="stack-sm">
             <Input
               error={nameError ?? undefined}
+              id="save-search-name"
               label="Saved search name"
+              name="savedSearchName"
               onChange={(event) => setName(event.target.value)}
               value={name}
             />
             <Checkbox
               checked={alertEnabled}
               description="This is wired for the MVP now, with future alert delivery to follow."
+              id="save-search-alerts"
               label="Enable alerts"
               onChange={(event) => setAlertEnabled(event.target.checked)}
             />
-            {error ? <p className="ui-field__message ui-field__message--error">{error}</p> : null}
+            {error ? (
+              <p className="ui-field__message ui-field__message--error" role="alert">
+                {error}
+              </p>
+            ) : null}
             <div className="button-row">
               <Button disabled={isPending} onClick={() => void handleSave()}>
                 {isPending ? "Saving..." : "Save search"}
               </Button>
-              <Button onClick={() => setIsOpen(false)} variant="secondary">
+              <Button disabled={isPending} onClick={() => setIsOpen(false)} variant="secondary">
                 Cancel
               </Button>
             </div>

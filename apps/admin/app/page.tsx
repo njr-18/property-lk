@@ -58,34 +58,37 @@ export default async function DashboardPage() {
                 description="Pending review listings will appear here when new inventory enters the moderation queue."
               />
             ) : (
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Listing</th>
-                    <th>Status</th>
-                    <th>Updated</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentPendingListings.map((listing) => (
-                    <tr key={listing.id}>
-                      <td>
-                        <Link className="table-link" href={`/listings/${listing.id}`}>
-                          <strong>{listing.title}</strong>
-                        </Link>
-                        <div className="muted">
-                          {listing.publicId} · {formatStatusLabel(listing.listingType)} ·{" "}
-                          {listing.locationLabel}
-                        </div>
-                      </td>
-                      <td>
-                        <StatusBadge status={listing.moderationStatus} />
-                      </td>
-                      <td>{formatDateTime(listing.updatedAt)}</td>
+              <div className="table-shell">
+                <table className="table">
+                  <caption className="sr-only">Recent pending listings for moderation</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Listing</th>
+                      <th scope="col">Status</th>
+                      <th scope="col">Updated</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {recentPendingListings.map((listing) => (
+                      <tr key={listing.id}>
+                        <td>
+                          <Link className="table-link" href={`/listings/${listing.id}`}>
+                            <strong>{listing.title}</strong>
+                          </Link>
+                          <div className="muted">
+                            {listing.publicId} - {formatStatusLabel(listing.listingType)} -{" "}
+                            {listing.locationLabel}
+                          </div>
+                        </td>
+                        <td>
+                          <StatusBadge status={listing.moderationStatus} />
+                        </td>
+                        <td>{formatDateTime(listing.updatedAt)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </SectionCard>
 
@@ -96,31 +99,34 @@ export default async function DashboardPage() {
                 description="New inquiries will show up here when buyers or renters contact listing owners."
               />
             ) : (
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Inquiry</th>
-                    <th>Status</th>
-                    <th>Received</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentInquiries.map((inquiry) => (
-                    <tr key={inquiry.id}>
-                      <td>
-                        <Link className="table-link" href={`/inquiries/${inquiry.id}`}>
-                          <strong>{inquiry.name ?? inquiry.email ?? "Anonymous inquiry"}</strong>
-                        </Link>
-                        <div className="muted">{inquiry.listingTitle}</div>
-                      </td>
-                      <td>
-                        <StatusBadge status={inquiry.status} />
-                      </td>
-                      <td>{formatDateTime(inquiry.createdAt)}</td>
+              <div className="table-shell">
+                <table className="table">
+                  <caption className="sr-only">Recent new inquiries</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Inquiry</th>
+                      <th scope="col">Status</th>
+                      <th scope="col">Received</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {recentInquiries.map((inquiry) => (
+                      <tr key={inquiry.id}>
+                        <td>
+                          <Link className="table-link" href={`/inquiries/${inquiry.id}`}>
+                            <strong>{inquiry.name ?? inquiry.email ?? "Anonymous inquiry"}</strong>
+                          </Link>
+                          <div className="muted">{inquiry.listingTitle}</div>
+                        </td>
+                        <td>
+                          <StatusBadge status={inquiry.status} />
+                        </td>
+                        <td>{formatDateTime(inquiry.createdAt)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </SectionCard>
         </div>

@@ -60,7 +60,11 @@ export function AuthForm({ mode, action, next }: AuthFormProps) {
             placeholder={isSignup ? "At least 8 characters" : "Your password"}
             type="password"
           />
-          {formState.error ? <p className="muted">{formState.error}</p> : null}
+          {formState.error ? (
+            <p aria-live="polite" className="ui-field__message ui-field__message--error" role="alert">
+              {formState.error}
+            </p>
+          ) : null}
         </CardContent>
         <CardFooter>
           <SubmitButton label={isSignup ? "Create account" : "Log in"} />

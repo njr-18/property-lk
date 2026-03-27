@@ -45,7 +45,7 @@ export default async function ListingsPage({ searchParams }: ListingsPageProps) 
           description="Review all listings, narrow the queue by status, and inspect full listing details."
         />
 
-        <div className="filter-row" aria-label="Listing status filters">
+        <nav aria-label="Listing status filters" className="filter-row">
           {filters.map((filter) => {
             const href = filter.value ? `/listings?status=${filter.value}` : "/listings";
             const isActive = filter.value === status || (!filter.value && !status);
@@ -60,7 +60,7 @@ export default async function ListingsPage({ searchParams }: ListingsPageProps) 
               </Link>
             );
           })}
-        </div>
+        </nav>
 
         <SectionCard title="Listings queue">
           {listings.length === 0 ? (
@@ -69,45 +69,48 @@ export default async function ListingsPage({ searchParams }: ListingsPageProps) 
               description="There are no listings for the selected moderation status yet."
             />
           ) : (
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Listing</th>
-                  <th>Status</th>
-                  <th>Price</th>
-                  <th>Scores</th>
-                  <th>Updated</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {listings.map((listing) => (
-                  <tr key={listing.id}>
-                    <td>
-                      <strong>{listing.title}</strong>
-                      <div className="muted">
-                        {listing.publicId} · {formatStatusLabel(listing.propertyType)} ·{" "}
-                        {listing.locationLabel}
-                      </div>
-                    </td>
-                    <td>
-                      <StatusBadge status={listing.moderationStatus} />
-                    </td>
-                    <td>{formatCurrencyLkr(listing.priceLkr)}</td>
-                    <td className="muted">
-                      Trust {formatScore(listing.trustScore)} · Quality{" "}
-                      {formatScore(listing.qualityScore)}
-                    </td>
-                    <td>{formatDateTime(listing.updatedAt)}</td>
-                    <td>
-                      <Link className="table-link" href={`/listings/${listing.id}`}>
-                        View details
-                      </Link>
-                    </td>
+            <div className="table-shell">
+              <table className="table">
+                <caption className="sr-only">Listings moderation queue</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Listing</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Price</th>
+                    <th scope="col">Scores</th>
+                    <th scope="col">Updated</th>
+                    <th scope="col">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {listings.map((listing) => (
+                    <tr key={listing.id}>
+                      <td>
+                        <strong>{listing.title}</strong>
+                        <div className="muted">
+                          {listing.publicId} - {formatStatusLabel(listing.propertyType)} -{" "}
+                          {listing.locationLabel}
+                        </div>
+                      </td>
+                      <td>
+                        <StatusBadge status={listing.moderationStatus} />
+                      </td>
+                      <td>{formatCurrencyLkr(listing.priceLkr)}</td>
+                      <td className="muted">
+                        Trust {formatScore(listing.trustScore)} - Quality{" "}
+                        {formatScore(listing.qualityScore)}
+                      </td>
+                      <td>{formatDateTime(listing.updatedAt)}</td>
+                      <td>
+                        <Link className="table-link" href={`/listings/${listing.id}`}>
+                          View details
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </SectionCard>
       </div>

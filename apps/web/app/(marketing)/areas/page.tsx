@@ -14,7 +14,7 @@ export const metadata: Metadata = createMetadata({
 });
 
 export default async function AreasIndexPage() {
-  const locations = await listSeoLocations(24);
+  const locations = await listSeoLocations(24).catch(() => []);
   const breadcrumbItems = [
     { name: "Home", path: "/" },
     { name: "Areas", path: "/areas" }

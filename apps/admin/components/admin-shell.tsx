@@ -33,6 +33,9 @@ type AdminShellProps = {
 export function AdminShell({ children, user }: AdminShellProps) {
   return (
     <div className="admin-shell">
+      <a className="skip-link" href="#admin-main">
+        Skip to content
+      </a>
       <aside className="sidebar">
         <div className="brand">
           <p className="brand-kicker">Property LK Admin</p>
@@ -58,7 +61,9 @@ export function AdminShell({ children, user }: AdminShellProps) {
         </div>
       </aside>
 
-      <main className="main">{children}</main>
+      <main className="main" id="admin-main" tabIndex={-1}>
+        {children}
+      </main>
     </div>
   );
 }

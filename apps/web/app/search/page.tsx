@@ -49,7 +49,7 @@ export default async function SearchPage({
       params.set(key, value);
     }
   }
-  const seoLocations = await listSeoLocations(6);
+  const seoLocations = await listSeoLocations(6).catch(() => []);
   const breadcrumbItems = [
     { name: "Home", path: "/" },
     { name: "Search", path: "/search" }

@@ -12,7 +12,7 @@ import { getAreaPageContentBySlug, listAreaListingsBySlug, listAreaPageSlugs, li
 import { buildAreaPath, buildSearchPath, createBreadcrumbSchema, createMetadata } from "../../../../lib/seo";
 
 export async function generateStaticParams() {
-  const slugs = await listAreaPageSlugs();
+  const slugs = await listAreaPageSlugs().catch(() => []);
   return slugs.map((slug) => ({ slug }));
 }
 
@@ -22,7 +22,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }>): Promise<Metadata> {
   const { slug } = await params;
-  const area = await getAreaPageContentBySlug(slug);
+  const area = await getAreaPageContentBySlug(slug).catch(() => null);
 
   if (!area) {
     return createMetadata({
@@ -48,15 +48,15 @@ export default async function AreaPage({
 }>) {
   const { slug } = await params;
   const [area, listings] = await Promise.all([
-    getAreaPageContentBySlug(slug),
-    listAreaListingsBySlug(slug, 12)
+    getAreaPageContentBySlug(slug).catch(() => null),
+    listAreaListingsBySlug(slug, 12).catch(() => [])
   ]);
 
   if (!area) {
     notFound();
   }
   const [relatedAreas, user] = await Promise.all([
-    listRelatedSeoLocations(area.slug, area.district, 4),
+    listRelatedSeoLocations(area.slug, area.district, 4).catch(() => []),
     getSessionUser()
   ]);
   const savedListingIds = user

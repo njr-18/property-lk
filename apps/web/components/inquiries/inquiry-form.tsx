@@ -37,38 +37,42 @@ export function InquiryForm({ listingId, defaultName, defaultEmail }: InquiryFor
     setErrors({});
     setSubmissionError(null);
 
-    const response = await fetch("/api/inquiries", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        listingId,
-        ...form
-      })
-    });
+    try {
+      const response = await fetch("/api/inquiries", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          listingId,
+          ...form
+        })
+      });
 
-    const payload = await response.json().catch(() => ({ ok: false }));
+      const payload = await response.json().catch(() => ({ ok: false }));
 
-    if (!response.ok || !payload.ok) {
-      const nextErrors: InquiryErrors = {};
+      if (!response.ok || !payload.ok) {
+        const nextErrors: InquiryErrors = {};
 
-      if (Array.isArray(payload.fieldErrors)) {
-        for (const fieldError of payload.fieldErrors) {
-          if (typeof fieldError.field === "string" && typeof fieldError.message === "string") {
-            nextErrors[fieldError.field as keyof InquiryErrors] = fieldError.message;
+        if (Array.isArray(payload.fieldErrors)) {
+          for (const fieldError of payload.fieldErrors) {
+            if (typeof fieldError.field === "string" && typeof fieldError.message === "string") {
+              nextErrors[fieldError.field as keyof InquiryErrors] = fieldError.message;
+            }
           }
         }
+
+        setErrors(nextErrors);
+        setSubmissionError(payload.error ?? "Inquiry could not be submitted.");
+        return;
       }
 
-      setErrors(nextErrors);
-      setSubmissionError(payload.error ?? "Inquiry could not be submitted.");
+      setSubmitted(true);
+    } catch {
+      setSubmissionError("Inquiry could not be submitted.");
+    } finally {
       setIsPending(false);
-      return;
     }
-
-    setSubmitted(true);
-    setIsPending(false);
   }
 
   if (submitted) {
@@ -95,28 +99,43 @@ export function InquiryForm({ listingId, defaultName, defaultEmail }: InquiryFor
       <CardContent>
         <form className="stack-sm" onSubmit={handleSubmit}>
           <Input
+            autoComplete="name"
+            disabled={isPending}
             error={errors.name}
+            id="inquiry-name"
             label="Name"
+            name="name"
             onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
             value={form.name}
           />
           <Input
+            autoComplete="email"
+            disabled={isPending}
             error={errors.email}
+            id="inquiry-email"
             label="Email"
+            name="email"
             onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
             type="email"
             value={form.email}
           />
           <Input
+            autoComplete="tel"
+            disabled={isPending}
             error={errors.phone}
             hint="Optional for email inquiries, required for call or WhatsApp."
+            id="inquiry-phone"
             label="Phone"
+            name="phone"
             onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))}
             value={form.phone}
           />
           <Select
+            disabled={isPending}
             error={errors.preferredContactMethod}
+            id="inquiry-preferred-contact-method"
             label="Preferred contact method"
+            name="preferredContactMethod"
             onChange={(event) =>
               setForm((current) => ({
                 ...current,
@@ -129,8 +148,11 @@ export function InquiryForm({ listingId, defaultName, defaultEmail }: InquiryFor
           <label className="ui-field" htmlFor="inquiry-message">
             <span className="ui-field__label">Message</span>
             <textarea
+              aria-describedby={errors.message ? undefined : "inquiry-message-hint"}
               className={`ui-input ui-textarea${errors.message ? " ui-input--error" : ""}`}
+              disabled={isPending}
               id="inquiry-message"
+              name="message"
               onChange={(event) => setForm((current) => ({ ...current, message: event.target.value }))}
               rows={6}
               value={form.message}
@@ -138,13 +160,15 @@ export function InquiryForm({ listingId, defaultName, defaultEmail }: InquiryFor
             {errors.message ? (
               <span className="ui-field__message ui-field__message--error">{errors.message}</span>
             ) : (
-              <span className="ui-field__message">
+              <span className="ui-field__message" id="inquiry-message-hint">
                 Share the basics you want to confirm before the next step.
               </span>
             )}
           </label>
           {submissionError ? (
-            <p className="ui-field__message ui-field__message--error">{submissionError}</p>
+            <p className="ui-field__message ui-field__message--error" role="alert">
+              {submissionError}
+            </p>
           ) : null}
           <div className="button-row">
             <Button disabled={isPending} type="submit">

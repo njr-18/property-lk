@@ -8,7 +8,7 @@ import { SectionHeading } from "../ui/section-heading";
 import { getSessionUser } from "../../lib/auth";
 import { searchListings } from "../../lib/listings";
 import { getSavedListingIdsForUser } from "../../lib/saved-listings";
-import { getDefaultSavedSearchName } from "../../lib/saved-searches";
+import { getDefaultSavedSearchName } from "../../lib/saved-search-links";
 import { listingTypeOptions, propertyTypeOptions } from "../../lib/site-data";
 import type { BreadcrumbItem } from "../../lib/seo";
 

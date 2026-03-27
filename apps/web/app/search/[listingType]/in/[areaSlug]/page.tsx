@@ -10,7 +10,7 @@ type RouteParams = {
 };
 
 export async function generateStaticParams() {
-  const slugs = await listAreaPageSlugs();
+  const slugs = await listAreaPageSlugs().catch(() => []);
 
   return slugs.flatMap((areaSlug) => [
     { listingType: "rent", areaSlug },

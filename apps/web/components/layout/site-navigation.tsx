@@ -13,6 +13,7 @@ function isActive(pathname: string, href: string) {
 export function SiteNavigation() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const drawerId = "site-mobile-navigation";
 
   return (
     <>
@@ -30,13 +31,20 @@ export function SiteNavigation() {
       </nav>
 
       <div className="site-nav__mobile-toggle">
-        <Button onClick={() => setIsOpen(true)} size="sm" variant="secondary">
+        <Button
+          aria-controls={drawerId}
+          aria-expanded={isOpen}
+          onClick={() => setIsOpen(true)}
+          size="sm"
+          variant="secondary"
+        >
           Menu
         </Button>
       </div>
 
       <Drawer
         description="Quick links to the MVP routes and saved areas."
+        id={drawerId}
         onClose={() => setIsOpen(false)}
         open={isOpen}
         side="right"

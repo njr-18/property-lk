@@ -40,6 +40,23 @@ body {
   padding-bottom: 92px;
 }
 
+.skip-link {
+  position: absolute;
+  top: -48px;
+  left: 16px;
+  z-index: 60;
+  min-height: 44px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: white;
+  font-weight: 800;
+}
+
+.skip-link:focus-visible {
+  top: 16px;
+}
+
 main {
   width: min(1180px, calc(100% - 32px));
   margin: 0 auto;
@@ -721,6 +738,24 @@ img {
   }
 
   .footer__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .button-row,
+  .toolbar--actions,
+  .ui-card__footer {
+    align-items: stretch;
+  }
+
+  .button-row > *,
+  .toolbar--actions > *,
+  .ui-card__footer > * {
+    width: 100%;
+  }
+
+  .table-row--compact {
     grid-template-columns: 1fr;
   }
 }
