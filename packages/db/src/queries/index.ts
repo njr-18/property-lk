@@ -162,6 +162,13 @@ export type AdminListingDetail = ListingDetail & {
     verifiedAt?: Date;
     expiresAt?: Date;
   }>;
+  versions: Array<{
+    id: string;
+    versionNumber: number;
+    changeSummary?: string;
+    changedByUserId?: string;
+    createdAt: Date;
+  }>;
 };
 
 export type AdminInquiryStatusFilter = InquiryListItem["status"];
@@ -343,6 +350,19 @@ const adminListingDetailSelect = {
       notes: true,
       verifiedAt: true,
       expiresAt: true
+    }
+  },
+  versions: {
+    orderBy: {
+      versionNumber: "desc"
+    },
+    take: 5,
+    select: {
+      id: true,
+      versionNumber: true,
+      changeSummary: true,
+      changedByUserId: true,
+      createdAt: true
     }
   }
 } satisfies Prisma.ListingSelect;
@@ -950,6 +970,13 @@ function mapAdminListingDetail(listing: AdminListingDetailRecord): AdminListingD
       notes: verification.notes ?? undefined,
       verifiedAt: verification.verifiedAt ?? undefined,
       expiresAt: verification.expiresAt ?? undefined
+    })),
+    versions: listing.versions.map((version) => ({
+      id: version.id,
+      versionNumber: version.versionNumber,
+      changeSummary: version.changeSummary ?? undefined,
+      changedByUserId: version.changedByUserId ?? undefined,
+      createdAt: version.createdAt
     }))
   };
 }

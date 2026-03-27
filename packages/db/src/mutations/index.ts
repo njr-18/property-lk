@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, type AvailabilityStatus, type InquiryStatus } from "@prisma/client";
 import { prisma } from "../client";
 
 export type CreateUserInput = {
@@ -35,6 +35,26 @@ export type CreateInquiryInput = {
   message: string;
   preferredContactMethod: string;
   source?: string;
+};
+
+export type UpdateListingModerationInput = {
+  listingId: string;
+  status: AvailabilityStatus;
+  changedByUserId: string;
+  changeSummary: string;
+};
+
+export type UpdateListingVerificationInput = {
+  listingId: string;
+  changedByUserId: string;
+  phoneVerified: boolean;
+  ownerVerified: boolean;
+  agencyVerified: boolean;
+};
+
+export type UpdateInquiryStatusInput = {
+  inquiryId: string;
+  status: InquiryStatus;
 };
 
 export async function createUser(input: CreateUserInput) {
@@ -308,5 +328,282 @@ export async function createInquiry(input: CreateInquiryInput) {
     });
 
     return inquiry;
+  });
+}
+
+export async function updateListingModerationStatus(input: UpdateListingModerationInput) {
+  return prisma.$transaction(async (tx) => {
+    const existingListing = await tx.listing.findFirst({
+      where: {
+        id: input.listingId,
+        deletedAt: null
+      },
+      select: listingVersionSnapshotSelect
+    });
+
+    if (!existingListing) {
+      throw new Error("LISTING_NOT_FOUND");
+    }
+
+    const now = new Date();
+    const updatedListing = await tx.listing.update({
+      where: {
+        id: input.listingId
+      },
+      data: {
+        availabilityStatus: input.status,
+        ...(input.status === "ACTIVE"
+          ? {
+              publishedAt: existingListing.publishedAt ?? now,
+              expiresAt: null
+            }
+          : {}),
+        ...(input.status === "EXPIRED"
+          ? {
+              expiresAt: now
+            }
+          : {})
+      },
+      select: listingVersionSnapshotSelect
+    });
+
+    await createListingVersion(tx, updatedListing, input.changedByUserId, input.changeSummary);
+
+    return {
+      id: updatedListing.id,
+      availabilityStatus: updatedListing.availabilityStatus
+    };
+  });
+}
+
+export async function updateListingVerification(input: UpdateListingVerificationInput) {
+  return prisma.$transaction(async (tx) => {
+    const existingListing = await tx.listing.findFirst({
+      where: {
+        id: input.listingId,
+        deletedAt: null
+      },
+      select: listingVersionSnapshotSelect
+    });
+
+    if (!existingListing) {
+      throw new Error("LISTING_NOT_FOUND");
+    }
+
+    const now = new Date();
+    const updatedListing = await tx.listing.update({
+      where: {
+        id: input.listingId
+      },
+      data: {
+        isPhoneVerified: input.phoneVerified,
+        isOwnerVerified: input.ownerVerified,
+        isAgencyVerified: input.agencyVerified
+      },
+      select: listingVersionSnapshotSelect
+    });
+
+    await syncListingVerificationRecord(
+      tx,
+      input.listingId,
+      "phone_verified",
+      input.phoneVerified,
+      input.changedByUserId,
+      now,
+      input.phoneVerified
+        ? "Phone verification updated from the admin moderation panel."
+        : "Phone verification flag cleared from the admin moderation panel."
+    );
+    await syncListingVerificationRecord(
+      tx,
+      input.listingId,
+      "owner_identity_verified",
+      input.ownerVerified,
+      input.changedByUserId,
+      now,
+      input.ownerVerified
+        ? "Owner verification updated from the admin moderation panel."
+        : "Owner verification flag cleared from the admin moderation panel."
+    );
+    await syncListingVerificationRecord(
+      tx,
+      input.listingId,
+      "agency_credentials_reviewed",
+      input.agencyVerified,
+      input.changedByUserId,
+      now,
+      input.agencyVerified
+        ? "Agency verification updated from the admin moderation panel."
+        : "Agency verification flag cleared from the admin moderation panel."
+    );
+
+    await createListingVersion(
+      tx,
+      updatedListing,
+      input.changedByUserId,
+      "Updated listing verification flags"
+    );
+
+    return {
+      id: updatedListing.id,
+      isPhoneVerified: updatedListing.isPhoneVerified,
+      isOwnerVerified: updatedListing.isOwnerVerified,
+      isAgencyVerified: updatedListing.isAgencyVerified
+    };
+  });
+}
+
+export async function updateInquiryStatus(input: UpdateInquiryStatusInput) {
+  const inquiry = await prisma.inquiry.findUnique({
+    where: {
+      id: input.inquiryId
+    },
+    select: {
+      id: true
+    }
+  });
+
+  if (!inquiry) {
+    throw new Error("INQUIRY_NOT_FOUND");
+  }
+
+  return prisma.inquiry.update({
+    where: {
+      id: input.inquiryId
+    },
+    data: {
+      status: input.status
+    },
+    select: {
+      id: true,
+      status: true,
+      updatedAt: true
+    }
+  });
+}
+
+const listingVersionSnapshotSelect = {
+  id: true,
+  publicId: true,
+  slug: true,
+  title: true,
+  priceLkr: true,
+  listingType: true,
+  propertyType: true,
+  availabilityStatus: true,
+  ownerUserId: true,
+  agentUserId: true,
+  primaryLocationId: true,
+  publishedAt: true,
+  expiresAt: true,
+  isPhoneVerified: true,
+  isWhatsappVerified: true,
+  isOwnerVerified: true,
+  isAgencyVerified: true,
+  qualityScore: true,
+  trustScore: true
+} satisfies Prisma.ListingSelect;
+
+type ListingVersionSnapshotRecord = Prisma.ListingGetPayload<{
+  select: typeof listingVersionSnapshotSelect;
+}>;
+
+async function createListingVersion(
+  tx: Prisma.TransactionClient,
+  listing: ListingVersionSnapshotRecord,
+  changedByUserId: string,
+  changeSummary: string
+) {
+  const latestVersion = await tx.listingVersion.findFirst({
+    where: {
+      listingId: listing.id
+    },
+    orderBy: {
+      versionNumber: "desc"
+    },
+    select: {
+      versionNumber: true
+    }
+  });
+
+  await tx.listingVersion.create({
+    data: {
+      listingId: listing.id,
+      versionNumber: (latestVersion?.versionNumber ?? 0) + 1,
+      changedByUserId,
+      changeSummary,
+      snapshotJson: buildListingVersionSnapshot(listing)
+    }
+  });
+}
+
+function buildListingVersionSnapshot(listing: ListingVersionSnapshotRecord): Prisma.InputJsonValue {
+  return {
+    publicId: listing.publicId,
+    slug: listing.slug,
+    title: listing.title,
+    priceLkr: listing.priceLkr,
+    listingType: listing.listingType,
+    propertyType: listing.propertyType,
+    availabilityStatus: listing.availabilityStatus,
+    ownerUserId: listing.ownerUserId,
+    agentUserId: listing.agentUserId,
+    primaryLocationId: listing.primaryLocationId,
+    publishedAt: listing.publishedAt?.toISOString() ?? null,
+    expiresAt: listing.expiresAt?.toISOString() ?? null,
+    isPhoneVerified: listing.isPhoneVerified,
+    isWhatsappVerified: listing.isWhatsappVerified,
+    isOwnerVerified: listing.isOwnerVerified,
+    isAgencyVerified: listing.isAgencyVerified,
+    qualityScore: listing.qualityScore,
+    trustScore: listing.trustScore
+  };
+}
+
+async function syncListingVerificationRecord(
+  tx: Prisma.TransactionClient,
+  listingId: string,
+  verificationType: string,
+  verified: boolean,
+  changedByUserId: string,
+  changedAt: Date,
+  notes: string
+) {
+  const existingRecord = await tx.listingVerification.findFirst({
+    where: {
+      listingId,
+      verificationType
+    },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    select: {
+      id: true
+    }
+  });
+
+  const data = {
+    verificationStatus: verified ? "verified" : "pending",
+    verifiedByUserId: verified ? changedByUserId : null,
+    verifiedAt: verified ? changedAt : null,
+    notes,
+    expiresAt: null as Date | null
+  };
+
+  if (existingRecord) {
+    await tx.listingVerification.update({
+      where: {
+        id: existingRecord.id
+      },
+      data
+    });
+
+    return;
+  }
+
+  await tx.listingVerification.create({
+    data: {
+      listingId,
+      verificationType,
+      ...data
+    }
   });
 }

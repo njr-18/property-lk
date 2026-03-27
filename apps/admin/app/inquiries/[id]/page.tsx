@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAdminInquiryById } from "@property-lk/db";
 import { buttonClassName } from "@property-lk/ui";
+import { InquiryStatusForm } from "../../../components/moderation-forms";
 import { PageHeader } from "../../../components/page-header";
 import { SectionCard } from "../../../components/section-card";
 import { StatePanel } from "../../../components/state-panel";
@@ -43,6 +44,10 @@ export default async function InquiryDetailsPage({ params }: InquiryDetailsPageP
         </div>
 
         <div className="grid two">
+          <SectionCard title="Status actions">
+            <InquiryStatusForm inquiryId={inquiry.id} status={inquiry.status} />
+          </SectionCard>
+
           <SectionCard title="Inquiry details">
             <dl className="detail-list">
               <div>

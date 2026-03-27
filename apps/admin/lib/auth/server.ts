@@ -60,3 +60,13 @@ export async function getAdminAccessState(): Promise<AdminAccessState> {
     user
   };
 }
+
+export async function requireAdminSessionUser(): Promise<AdminSessionUser> {
+  const accessState = await getAdminAccessState();
+
+  if (accessState.kind !== "authorized") {
+    throw new Error("ADMIN_AUTH_REQUIRED");
+  }
+
+  return accessState.user;
+}

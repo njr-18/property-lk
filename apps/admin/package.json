@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@property-lk/db": "workspace:*",
+    "@property-lk/validation": "workspace:*",
     "@property-lk/ui": "workspace:*",
     "next": "^15.3.0",
     "react": "^19.0.0",

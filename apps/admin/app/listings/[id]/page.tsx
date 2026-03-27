@@ -2,6 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAdminListingByIdentifier } from "@property-lk/db";
 import { buttonClassName } from "@property-lk/ui";
+import {
+  ListingModerationForm,
+  ListingVerificationForm
+} from "../../../components/moderation-forms";
 import { PageHeader } from "../../../components/page-header";
 import { SectionCard } from "../../../components/section-card";
 import { StatePanel } from "../../../components/state-panel";
@@ -46,6 +50,21 @@ export default async function ListingDetailsPage({ params }: ListingDetailsPageP
           <StatusBadge status={listing.moderationStatus} />
           <span className="detail-chip">{formatStatusLabel(listing.listingType)}</span>
           <span className="detail-chip">{formatStatusLabel(listing.propertyType)}</span>
+        </div>
+
+        <div className="grid two">
+          <SectionCard title="Moderation actions">
+            <ListingModerationForm listingId={listing.id} />
+          </SectionCard>
+
+          <SectionCard title="Verification flags">
+            <ListingVerificationForm
+              agencyVerified={listing.verification.agencyVerified}
+              listingId={listing.id}
+              ownerVerified={listing.verification.ownerVerified}
+              phoneVerified={listing.verification.phoneVerified}
+            />
+          </SectionCard>
         </div>
 
         <div className="grid two">
@@ -177,6 +196,33 @@ export default async function ListingDetailsPage({ params }: ListingDetailsPageP
               {listing.features.map((feature) => (
                 <div key={feature.id} className="detail-chip">
                   {formatStatusLabel(feature.featureKey)}: {feature.featureValue}
+                </div>
+              ))}
+            </div>
+          )}
+        </SectionCard>
+
+        <SectionCard title="Recent change history">
+          {listing.versions.length === 0 ? (
+            <p className="muted">No listing version history recorded yet.</p>
+          ) : (
+            <div className="stack compact">
+              {listing.versions.map((version) => (
+                <div key={version.id} className="list-row">
+                  <div>
+                    <strong>Version {version.versionNumber}</strong>
+                    <div className="muted">
+                      {version.changeSummary ?? "No summary recorded for this change."}
+                    </div>
+                  </div>
+                  <div className="list-row-meta">
+                    <div className="muted">{formatDateTime(version.createdAt)}</div>
+                    <div className="muted">
+                      {version.changedByUserId
+                        ? `Changed by ${version.changedByUserId}`
+                        : "Changed by unknown user"}
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
