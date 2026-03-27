@@ -1,12 +1,31 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { navItems } from "../lib/mock-data";
+import type { AdminSessionUser } from "../lib/auth";
+
+const navItems = [
+  {
+    href: "/",
+    label: "Dashboard",
+    description: "Moderation overview"
+  },
+  {
+    href: "/listings",
+    label: "Listings",
+    description: "Read-only listing review"
+  },
+  {
+    href: "/inquiries",
+    label: "Inquiries",
+    description: "Lead and message review"
+  }
+] as const;
 
 type AdminShellProps = {
   children: ReactNode;
+  user: AdminSessionUser;
 };
 
-export function AdminShell({ children }: AdminShellProps) {
+export function AdminShell({ children, user }: AdminShellProps) {
   return (
     <div className="admin-shell">
       <aside className="sidebar">
@@ -14,7 +33,7 @@ export function AdminShell({ children }: AdminShellProps) {
           <p className="brand-kicker">Property LK Admin</p>
           <h1>Moderation desk</h1>
           <p className="subtle">
-            Review listings, confirm trust signals, and keep the marketplace clean.
+            Review supply and inquiry quality before moderation actions go live.
           </p>
         </div>
 
@@ -28,7 +47,9 @@ export function AdminShell({ children }: AdminShellProps) {
         </nav>
 
         <div className="sidebar-note">
-          All actions here are placeholders wired for future moderation workflows.
+          <strong>{user.name ?? user.email}</strong>
+          <div className="muted">{user.email}</div>
+          <div className="muted">Role: {user.role}</div>
         </div>
       </aside>
 

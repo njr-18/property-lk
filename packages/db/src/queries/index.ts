@@ -1,4 +1,11 @@
-import { type FurnishingLevel, type ListedByType, type ListingType, type Prisma, type PropertyType } from "@prisma/client";
+import {
+  type AvailabilityStatus,
+  type FurnishingLevel,
+  type ListedByType,
+  type ListingType,
+  type Prisma,
+  type PropertyType
+} from "@prisma/client";
 import { buildListingSearchQuery } from "@property-lk/search";
 import type { NormalizedListingSearchFilters } from "@property-lk/types";
 import { prisma } from "../client";
@@ -100,6 +107,94 @@ export type InquiryListItem = {
   createdAt: Date;
 };
 
+export type AdminListingStatusFilter = "pending" | "approved" | "rejected";
+
+export type AdminListingModerationStatus =
+  | AdminListingStatusFilter
+  | "draft"
+  | "expired"
+  | "archived";
+
+export type AdminListingListItem = ListingSummary & {
+  moderationStatus: AdminListingModerationStatus;
+  createdAt: Date;
+  updatedAt: Date;
+  publishedAt?: Date;
+  inquiryCount: number;
+  qualityScore: number;
+  trustScore: number;
+  listedByType: ListingDetail["listedByType"];
+  owner?: {
+    id: string;
+    name?: string;
+    email: string;
+  };
+  agent?: {
+    id: string;
+    name?: string;
+    email: string;
+  };
+};
+
+export type AdminListingDetail = ListingDetail & {
+  moderationStatus: AdminListingModerationStatus;
+  createdAt: Date;
+  updatedAt: Date;
+  publishedAt?: Date;
+  inquiryCount: number;
+  qualityScore: number;
+  trustScore: number;
+  owner?: {
+    id: string;
+    name?: string;
+    email: string;
+  };
+  agent?: {
+    id: string;
+    name?: string;
+    email: string;
+  };
+  verifications: Array<{
+    id: string;
+    verificationType: string;
+    verificationStatus: string;
+    notes?: string;
+    verifiedAt?: Date;
+    expiresAt?: Date;
+  }>;
+};
+
+export type AdminInquiryStatusFilter = InquiryListItem["status"];
+
+export type AdminInquiryListItem = InquiryListItem & {
+  updatedAt: Date;
+  source?: string;
+  user?: {
+    id: string;
+    name?: string;
+    email: string;
+    role: AuthUser["role"];
+  };
+};
+
+export type AdminInquiryDetail = AdminInquiryListItem & {
+  listingPublicId: string;
+  listingStatus: AdminListingModerationStatus;
+  user?: {
+    id: string;
+    name?: string;
+    email: string;
+    role: AuthUser["role"];
+  };
+};
+
+export type AdminDashboardStats = {
+  pendingListings: number;
+  approvedListings: number;
+  rejectedListings: number;
+  newInquiries: number;
+};
+
 const listingSummarySelect = {
   id: true,
   publicId: true,
@@ -188,6 +283,118 @@ type AuthUserRecord = Prisma.UserGetPayload<{
     role: true;
     passwordHash: true;
   };
+}>;
+
+const adminListingListSelect = {
+  ...listingSummarySelect,
+  availabilityStatus: true,
+  createdAt: true,
+  updatedAt: true,
+  publishedAt: true,
+  inquiryCount: true,
+  qualityScore: true,
+  trustScore: true,
+  listedByType: true,
+  owner: {
+    select: {
+      id: true,
+      name: true,
+      email: true
+    }
+  },
+  agent: {
+    select: {
+      id: true,
+      name: true,
+      email: true
+    }
+  }
+} satisfies Prisma.ListingSelect;
+
+const adminListingDetailSelect = {
+  ...listingDetailSelect,
+  availabilityStatus: true,
+  createdAt: true,
+  updatedAt: true,
+  publishedAt: true,
+  inquiryCount: true,
+  qualityScore: true,
+  trustScore: true,
+  owner: {
+    select: {
+      id: true,
+      name: true,
+      email: true
+    }
+  },
+  agent: {
+    select: {
+      id: true,
+      name: true,
+      email: true
+    }
+  },
+  verifications: {
+    orderBy: [{ createdAt: "desc" }, { verificationType: "asc" }],
+    select: {
+      id: true,
+      verificationType: true,
+      verificationStatus: true,
+      notes: true,
+      verifiedAt: true,
+      expiresAt: true
+    }
+  }
+} satisfies Prisma.ListingSelect;
+
+const adminInquirySelect = {
+  id: true,
+  listingId: true,
+  userId: true,
+  name: true,
+  email: true,
+  phone: true,
+  message: true,
+  preferredContactMethod: true,
+  status: true,
+  source: true,
+  createdAt: true,
+  updatedAt: true,
+  user: {
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true
+    }
+  },
+  listing: {
+    select: {
+      publicId: true,
+      slug: true,
+      title: true,
+      availabilityStatus: true,
+      primaryLocation: {
+        select: {
+          areaName: true,
+          city: true,
+          district: true
+        }
+      }
+    }
+  }
+} satisfies Prisma.InquirySelect;
+
+type AdminListingListRecord = Prisma.ListingGetPayload<{
+  select: typeof adminListingListSelect;
+}>;
+
+type AdminListingDetailRecord = Prisma.ListingGetPayload<{
+  select: typeof adminListingDetailSelect;
+}>;
+
+type AdminInquiryRecord = Prisma.InquiryGetPayload<{
+  select: typeof adminInquirySelect;
 }>;
 
 export async function searchListings(
@@ -434,6 +641,109 @@ export async function listInquiriesForUser(userId: string): Promise<InquiryListI
   }));
 }
 
+export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
+  const [pendingListings, approvedListings, rejectedListings, newInquiries] = await prisma.$transaction([
+    prisma.listing.count({
+      where: {
+        deletedAt: null,
+        availabilityStatus: "PENDING_REVIEW"
+      }
+    }),
+    prisma.listing.count({
+      where: {
+        deletedAt: null,
+        availabilityStatus: "ACTIVE"
+      }
+    }),
+    prisma.listing.count({
+      where: {
+        deletedAt: null,
+        availabilityStatus: "REJECTED"
+      }
+    }),
+    prisma.inquiry.count({
+      where: {
+        status: "NEW"
+      }
+    })
+  ]);
+
+  return {
+    pendingListings,
+    approvedListings,
+    rejectedListings,
+    newInquiries
+  };
+}
+
+export async function listAdminListings(
+  status?: AdminListingStatusFilter
+): Promise<AdminListingListItem[]> {
+  const listings = await prisma.listing.findMany({
+    where: {
+      deletedAt: null,
+      ...(status ? { availabilityStatus: mapAdminListingFilterToAvailabilityStatus(status) } : {})
+    },
+    orderBy: [
+      {
+        updatedAt: "desc"
+      },
+      {
+        createdAt: "desc"
+      }
+    ],
+    select: adminListingListSelect
+  });
+
+  return listings.map(mapAdminListingListItem);
+}
+
+export async function getAdminListingByIdentifier(
+  identifier: string
+): Promise<AdminListingDetail | null> {
+  const listing = await prisma.listing.findFirst({
+    where: {
+      deletedAt: null,
+      OR: [{ id: identifier }, { publicId: identifier }, { slug: identifier }]
+    },
+    select: adminListingDetailSelect
+  });
+
+  return listing ? mapAdminListingDetail(listing) : null;
+}
+
+export async function listAdminInquiries(
+  status?: AdminInquiryStatusFilter
+): Promise<AdminInquiryListItem[]> {
+  const inquiries = await prisma.inquiry.findMany({
+    where: {
+      ...(status ? { status } : {})
+    },
+    orderBy: [
+      {
+        createdAt: "desc"
+      },
+      {
+        updatedAt: "desc"
+      }
+    ],
+    select: adminInquirySelect
+  });
+
+  return inquiries.map(mapAdminInquiry);
+}
+
+export async function getAdminInquiryById(id: string): Promise<AdminInquiryDetail | null> {
+  const inquiry = await prisma.inquiry.findUnique({
+    where: {
+      id
+    },
+    select: adminInquirySelect
+  });
+
+  return inquiry ? mapAdminInquiry(inquiry) : null;
+}
+
 export async function getRelatedListings(
   listing: Pick<ListingDetail, "id" | "listingType" | "propertyType" | "district" | "area">,
   take = 3
@@ -537,6 +847,34 @@ function mapListingSummary(listing: ListingSummaryRecord): ListingSummary {
   };
 }
 
+function mapAdminListingListItem(listing: AdminListingListRecord): AdminListingListItem {
+  return {
+    ...mapListingSummary(listing),
+    moderationStatus: mapAvailabilityStatus(listing.availabilityStatus),
+    createdAt: listing.createdAt,
+    updatedAt: listing.updatedAt,
+    publishedAt: listing.publishedAt ?? undefined,
+    inquiryCount: listing.inquiryCount,
+    qualityScore: listing.qualityScore,
+    trustScore: listing.trustScore,
+    listedByType: mapListedByType(listing.listedByType),
+    owner: listing.owner
+      ? {
+          id: listing.owner.id,
+          name: listing.owner.name ?? undefined,
+          email: listing.owner.email
+        }
+      : undefined,
+    agent: listing.agent
+      ? {
+          id: listing.agent.id,
+          name: listing.agent.name ?? undefined,
+          email: listing.agent.email
+        }
+      : undefined
+  };
+}
+
 function mapAuthUser(user: AuthUserRecord): AuthUser {
   return {
     id: user.id,
@@ -581,6 +919,74 @@ function mapListingDetail(listing: ListingDetailRecord): ListingDetail {
   };
 }
 
+function mapAdminListingDetail(listing: AdminListingDetailRecord): AdminListingDetail {
+  return {
+    ...mapListingDetail(listing),
+    moderationStatus: mapAvailabilityStatus(listing.availabilityStatus),
+    createdAt: listing.createdAt,
+    updatedAt: listing.updatedAt,
+    publishedAt: listing.publishedAt ?? undefined,
+    inquiryCount: listing.inquiryCount,
+    qualityScore: listing.qualityScore,
+    trustScore: listing.trustScore,
+    owner: listing.owner
+      ? {
+          id: listing.owner.id,
+          name: listing.owner.name ?? undefined,
+          email: listing.owner.email
+        }
+      : undefined,
+    agent: listing.agent
+      ? {
+          id: listing.agent.id,
+          name: listing.agent.name ?? undefined,
+          email: listing.agent.email
+        }
+      : undefined,
+    verifications: listing.verifications.map((verification) => ({
+      id: verification.id,
+      verificationType: verification.verificationType,
+      verificationStatus: verification.verificationStatus,
+      notes: verification.notes ?? undefined,
+      verifiedAt: verification.verifiedAt ?? undefined,
+      expiresAt: verification.expiresAt ?? undefined
+    }))
+  };
+}
+
+function mapAdminInquiry(inquiry: AdminInquiryRecord): AdminInquiryDetail {
+  return {
+    id: inquiry.id,
+    listingId: inquiry.listingId,
+    listingPublicId: inquiry.listing.publicId,
+    listingSlug: inquiry.listing.slug,
+    listingTitle: inquiry.listing.title,
+    listingLocationLabel: buildLocationLabel(
+      inquiry.listing.primaryLocation.areaName,
+      inquiry.listing.primaryLocation.city,
+      inquiry.listing.primaryLocation.district
+    ),
+    name: inquiry.name ?? undefined,
+    email: inquiry.email ?? undefined,
+    phone: inquiry.phone ?? undefined,
+    message: inquiry.message ?? undefined,
+    preferredContactMethod: inquiry.preferredContactMethod ?? undefined,
+    status: inquiry.status,
+    source: inquiry.source ?? undefined,
+    createdAt: inquiry.createdAt,
+    updatedAt: inquiry.updatedAt,
+    listingStatus: mapAvailabilityStatus(inquiry.listing.availabilityStatus),
+    user: inquiry.user
+      ? {
+          id: inquiry.user.id,
+          name: inquiry.user.name ?? undefined,
+          email: inquiry.user.email,
+          role: inquiry.user.role
+        }
+      : undefined
+  };
+}
+
 function buildLocationLabel(area: string, city: string | null, district: string) {
   const parts = [area, city, district].filter(
     (part, index, values) => Boolean(part) && values.indexOf(part) === index
@@ -591,6 +997,38 @@ function buildLocationLabel(area: string, city: string | null, district: string)
 
 function mapListingType(value: ListingType): ListingSummary["listingType"] {
   return value === "RENT" ? "rent" : "sale";
+}
+
+function mapAvailabilityStatus(value: AvailabilityStatus): AdminListingModerationStatus {
+  switch (value) {
+    case "PENDING_REVIEW":
+      return "pending";
+    case "ACTIVE":
+      return "approved";
+    case "REJECTED":
+      return "rejected";
+    case "DRAFT":
+      return "draft";
+    case "EXPIRED":
+      return "expired";
+    case "ARCHIVED":
+      return "archived";
+    default:
+      return "draft";
+  }
+}
+
+function mapAdminListingFilterToAvailabilityStatus(
+  value: AdminListingStatusFilter
+): AvailabilityStatus {
+  switch (value) {
+    case "pending":
+      return "PENDING_REVIEW";
+    case "approved":
+      return "ACTIVE";
+    case "rejected":
+      return "REJECTED";
+  }
 }
 
 function mapPropertyType(value: PropertyType): ListingSummary["propertyType"] {

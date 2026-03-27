@@ -1,3 +1,4 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@property-lk/ui";
 import type { ReactNode } from "react";
 
 type SectionCardProps = {
@@ -7,9 +8,11 @@ type SectionCardProps = {
 
 export function SectionCard({ title, children }: SectionCardProps) {
   return (
-    <section className="card">
-      <h2>{title}</h2>
-      {children}
-    </section>
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+      </CardHeader>
+      <CardContent>{children}</CardContent>
+    </Card>
   );
 }

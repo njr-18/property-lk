@@ -5,6 +5,18 @@
     "incremental": true,
     "baseUrl": ".",
     "paths": {
+      "@property-lk/db": [
+        "../../packages/db/src/index.ts"
+      ],
+      "@property-lk/search": [
+        "../../packages/search/src/index.ts"
+      ],
+      "@property-lk/types": [
+        "../../packages/types/src/index.ts"
+      ],
+      "@property-lk/ui": [
+        "../../packages/ui/src/index.ts"
+      ],
       "@/*": [
         "./*"
       ]
