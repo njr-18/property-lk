@@ -114,6 +114,9 @@ img {
 .card-grid,
 .stats-grid,
 .split-grid,
+.stack-lg,
+.stack-sm,
+.stack-xs,
 .footer__grid,
 .footer__links,
 .footer__column,
@@ -649,6 +652,29 @@ img {
   border-radius: 16px;
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.76);
+}
+
+.table-row--compact {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.stack-lg {
+  gap: 20px;
+}
+
+.stack-sm {
+  gap: 12px;
+}
+
+.stack-xs {
+  gap: 6px;
+}
+
+.ui-textarea {
+  min-height: 140px;
+  padding: 14px 16px;
+  resize: vertical;
 }
 
 .sr-only {

@@ -1,10 +1,12 @@
 import { Button, Card, CardContent, CardHeader, CardTitle, Checkbox, Input, Pagination, Select } from "@property-lk/ui";
 import { ListingCard } from "../../components/listing/listing-card";
 import { PageShell } from "../../components/layout/page-shell";
+import { SaveSearchForm } from "../../components/saved-searches/save-search-form";
 import { SectionHeading } from "../../components/ui/section-heading";
 import { getSessionUser } from "../../lib/auth";
 import { searchListings } from "../../lib/listings";
 import { getSavedListingIdsForUser } from "../../lib/saved-listings";
+import { getDefaultSavedSearchName } from "../../lib/saved-searches";
 import { listingTypeOptions, propertyTypeOptions } from "../../lib/site-data";
 
 export default async function SearchPage({
@@ -79,6 +81,10 @@ export default async function SearchPage({
           </form>
         </CardContent>
       </Card>
+      <SaveSearchForm
+        defaultName={getDefaultSavedSearchName(results.filters)}
+        isAuthenticated={Boolean(user)}
+      />
       {results.issues.length > 0 ? (
         <Card className="panel">
           <CardHeader>

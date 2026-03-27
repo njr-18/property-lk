@@ -110,3 +110,9 @@ export type SearchResponse = {
   filters: NormalizedListingSearchFilters;
   listingIds: string[];
 };
+
+export type SavedSearchPayload = {
+  name: string;
+  alertEnabled?: boolean;
+  searchParams: ListingSearchRawParams;
+};

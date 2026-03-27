@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Badge, Card, CardContent, CardFooter, CardHeader, CardTitle, buttonClassName } from "@property-lk/ui";
 import { notFound } from "next/navigation";
 import { PageShell } from "../../../components/layout/page-shell";
+import { InquiryForm } from "../../../components/inquiries/inquiry-form";
 import { ListingCard } from "../../../components/listing/listing-card";
 import { SaveListingButton } from "../../../components/saved-listings/save-listing-button";
 import { SectionHeading } from "../../../components/ui/section-heading";
@@ -82,7 +83,7 @@ export default async function ListingDetailsPage({
         </Card>
         <Card className="panel">
           <CardHeader>
-            <CardTitle>Future-ready details</CardTitle>
+            <CardTitle>Listing details and contact path</CardTitle>
           </CardHeader>
           <CardContent>
           <p className="muted">
@@ -105,6 +106,11 @@ export default async function ListingDetailsPage({
           </CardContent>
         </Card>
       </div>
+      <InquiryForm
+        defaultEmail={user?.email}
+        defaultName={user?.name}
+        listingId={listing.id}
+      />
       <section>
         <SectionHeading
           eyebrow="Related"

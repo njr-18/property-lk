@@ -30,28 +30,27 @@ export default async function AccountPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Saved items</CardTitle>
+            <CardTitle>Saved searches</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="muted">Jump back into tracked listings and search alerts from one place.</p>
+            <p className="muted">Rename searches, toggle alerts, and jump back into the exact filter set.</p>
           </CardContent>
           <CardFooter>
-            <Link className={buttonClassName({ variant: "secondary", size: "md" })} href="/saved/listings">
-              View saved listings
+            <Link className={buttonClassName({ variant: "secondary", size: "md" })} href="/saved/searches">
+              View saved searches
             </Link>
           </CardFooter>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Sign-in details</CardTitle>
+            <CardTitle>Saved listings</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="muted">{user.email}</p>
-            <p className="muted">Role: {user.role.toLowerCase()}</p>
+            <p className="muted">Keep shortlisted properties close by while you compare and inquire.</p>
           </CardContent>
           <CardFooter>
             <Link className={buttonClassName({ variant: "secondary", size: "md" })} href="/saved/listings">
-              Review saved listings
+              View saved listings
             </Link>
           </CardFooter>
         </Card>

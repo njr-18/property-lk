@@ -75,6 +75,31 @@ export type SavedListingsPage = {
   listings: ListingSummary[];
 };
 
+export type SavedSearchSummary = {
+  id: string;
+  name: string;
+  alertEnabled: boolean;
+  alertFrequency: string;
+  createdAt: Date;
+  updatedAt: Date;
+  searchParams: NormalizedListingSearchFilters;
+};
+
+export type InquiryListItem = {
+  id: string;
+  listingId: string;
+  listingSlug: string;
+  listingTitle: string;
+  listingLocationLabel: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  message?: string;
+  preferredContactMethod?: string;
+  status: "NEW" | "CONTACTED" | "CLOSED" | "SPAM";
+  createdAt: Date;
+};
+
 const listingSummarySelect = {
   id: true,
   publicId: true,
@@ -318,6 +343,95 @@ export async function listSavedListings(
     pageSize: safePageSize,
     listings: savedListings.map((savedListing) => mapListingSummary(savedListing.listing))
   };
+}
+
+export async function listSavedSearches(userId: string): Promise<SavedSearchSummary[]> {
+  const savedSearches = await prisma.savedSearch.findMany({
+    where: {
+      userId
+    },
+    orderBy: [
+      {
+        updatedAt: "desc"
+      },
+      {
+        createdAt: "desc"
+      }
+    ],
+    select: {
+      id: true,
+      name: true,
+      alertEnabled: true,
+      alertFrequency: true,
+      createdAt: true,
+      updatedAt: true,
+      searchParamsJson: true
+    }
+  });
+
+  return savedSearches.map((savedSearch) => ({
+    id: savedSearch.id,
+    name: savedSearch.name,
+    alertEnabled: savedSearch.alertEnabled,
+    alertFrequency: savedSearch.alertFrequency,
+    createdAt: savedSearch.createdAt,
+    updatedAt: savedSearch.updatedAt,
+    searchParams: savedSearch.searchParamsJson as NormalizedListingSearchFilters
+  }));
+}
+
+export async function listInquiriesForUser(userId: string): Promise<InquiryListItem[]> {
+  const inquiries = await prisma.inquiry.findMany({
+    where: {
+      userId
+    },
+    orderBy: {
+      createdAt: "desc"
+    },
+    select: {
+      id: true,
+      listingId: true,
+      name: true,
+      email: true,
+      phone: true,
+      message: true,
+      preferredContactMethod: true,
+      status: true,
+      createdAt: true,
+      listing: {
+        select: {
+          slug: true,
+          title: true,
+          primaryLocation: {
+            select: {
+              areaName: true,
+              city: true,
+              district: true
+            }
+          }
+        }
+      }
+    }
+  });
+
+  return inquiries.map((inquiry) => ({
+    id: inquiry.id,
+    listingId: inquiry.listingId,
+    listingSlug: inquiry.listing.slug,
+    listingTitle: inquiry.listing.title,
+    listingLocationLabel: buildLocationLabel(
+      inquiry.listing.primaryLocation.areaName,
+      inquiry.listing.primaryLocation.city,
+      inquiry.listing.primaryLocation.district
+    ),
+    name: inquiry.name ?? undefined,
+    email: inquiry.email ?? undefined,
+    phone: inquiry.phone ?? undefined,
+    message: inquiry.message ?? undefined,
+    preferredContactMethod: inquiry.preferredContactMethod ?? undefined,
+    status: inquiry.status,
+    createdAt: inquiry.createdAt
+  }));
 }
 
 export async function getRelatedListings(

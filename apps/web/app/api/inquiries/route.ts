@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
+import { getSessionUser } from "../../../lib/auth";
+import { handleCreateInquiry } from "./handlers";
 
 export async function POST(request: Request) {
-  const body = await request.json().catch(() => ({}));
+  const user = await getSessionUser();
 
-  return NextResponse.json({
-    ok: true,
-    received: body,
-    message: "Inquiry endpoint scaffolded successfully."
+  return handleCreateInquiry({
+    request,
+    userId: user?.id ?? null
   });
 }

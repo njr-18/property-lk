@@ -8,6 +8,9 @@
       "@property-lk/db": [
         "../../packages/db/src/index.ts"
       ],
+      "@property-lk/db/client": [
+        "../../packages/db/src/client.ts"
+      ],
       "@property-lk/search": [
         "../../packages/search/src/index.ts"
       ],

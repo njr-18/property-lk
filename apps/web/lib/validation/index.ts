@@ -1,3 +1,1 @@
-export function validationPlaceholder() {
-  return "validation placeholder";
-}
+export * from "@property-lk/validation";
