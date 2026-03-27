@@ -16,8 +16,7 @@
   ],
   "dependencies": {
     "@property-lk/types": "workspace:*",
-    "@property-lk/validation": "workspace:*",
-    "@prisma/client": "^6.5.0"
+    "@property-lk/validation": "workspace:*"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",

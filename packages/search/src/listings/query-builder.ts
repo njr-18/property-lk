@@ -1,4 +1,3 @@
-import type { Prisma } from "@prisma/client";
 import type { NormalizedListingSearchFilters } from "@property-lk/types";
 
 const listingTypeMap = {
@@ -21,9 +20,61 @@ const furnishedStateMap = {
   furnished: "FURNISHED"
 } as const;
 
+type QueryMode = "default" | "insensitive";
+type SortOrder = "asc" | "desc";
+
+type StringFilter = {
+  equals?: string;
+  contains?: string;
+  mode?: QueryMode;
+};
+
+type NumberFilter = {
+  gte?: number;
+  lte?: number;
+};
+
+type PrimaryLocationFilter = {
+  district?: StringFilter;
+  areaName?: StringFilter;
+  city?: StringFilter;
+};
+
+type ListingWhereInput = {
+  AND?: ListingWhereInput[];
+  OR?: ListingWhereInput[];
+  availabilityStatus?: "ACTIVE";
+  deletedAt?: null;
+  listingType?: (typeof listingTypeMap)[keyof typeof listingTypeMap];
+  propertyType?: (typeof propertyTypeMap)[keyof typeof propertyTypeMap];
+  priceLkr?: NumberFilter;
+  bedrooms?: NumberFilter;
+  bathrooms?: NumberFilter;
+  furnishingLevel?: (typeof furnishedStateMap)[keyof typeof furnishedStateMap];
+  parkingSlots?: NumberFilter | null;
+  primaryLocation?: PrimaryLocationFilter;
+  isPhoneVerified?: boolean;
+  isWhatsappVerified?: boolean;
+  isOwnerVerified?: boolean;
+  isAgencyVerified?: boolean;
+  title?: StringFilter;
+  description?: StringFilter;
+  addressLine?: StringFilter;
+};
+
+type ListingOrderByWithRelationInput = {
+  publishedAt?: SortOrder;
+  createdAt?: SortOrder;
+  priceLkr?: SortOrder;
+  isFeatured?: SortOrder;
+  trustScore?: SortOrder;
+  qualityScore?: SortOrder;
+  freshnessScore?: SortOrder;
+};
+
 export type ListingSearchPrismaQuery = {
-  where: Prisma.ListingWhereInput;
-  orderBy: Prisma.ListingOrderByWithRelationInput[];
+  where: ListingWhereInput;
+  orderBy: ListingOrderByWithRelationInput[];
   skip: number;
   take: number;
 };
@@ -31,7 +82,7 @@ export type ListingSearchPrismaQuery = {
 export function buildListingSearchQuery(
   filters: NormalizedListingSearchFilters
 ): ListingSearchPrismaQuery {
-  const andFilters: Prisma.ListingWhereInput[] = [
+  const andFilters: ListingWhereInput[] = [
     {
       availabilityStatus: "ACTIVE",
       deletedAt: null,
@@ -189,7 +240,7 @@ export function buildListingSearchQuery(
 
 function buildListingSearchOrderBy(
   sort: NormalizedListingSearchFilters["sort"]
-): Prisma.ListingOrderByWithRelationInput[] {
+): ListingOrderByWithRelationInput[] {
   switch (sort) {
     case "newest":
       return [{ publishedAt: "desc" }, { createdAt: "desc" }];
