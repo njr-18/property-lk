@@ -20,6 +20,15 @@ importers:
 
   apps/admin:
     dependencies:
+      '@property-lk/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@property-lk/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      '@property-lk/validation':
+        specifier: workspace:*
+        version: link:../../packages/validation
       next:
         specifier: ^15.3.0
         version: 15.5.14(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -60,9 +69,24 @@ importers:
 
   apps/web:
     dependencies:
+      '@property-lk/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@property-lk/search':
+        specifier: workspace:*
+        version: link:../../packages/search
+      '@property-lk/seo':
+        specifier: workspace:*
+        version: link:../../packages/seo
+      '@property-lk/types':
+        specifier: workspace:*
+        version: link:../../packages/types
       '@property-lk/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@property-lk/validation':
+        specifier: workspace:*
+        version: link:../../packages/validation
       next:
         specifier: ^15.3.0
         version: 15.5.14(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -114,6 +138,12 @@ importers:
       '@prisma/client':
         specifier: ^6.5.0
         version: 6.19.2(prisma@6.19.2(typescript@5.9.3))(typescript@5.9.3)
+      '@property-lk/search':
+        specifier: workspace:*
+        version: link:../search
+      '@property-lk/types':
+        specifier: workspace:*
+        version: link:../types
     devDependencies:
       '@types/node':
         specifier: ^22.10.0
