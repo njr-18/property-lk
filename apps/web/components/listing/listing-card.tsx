@@ -1,9 +1,17 @@
 import Link from "next/link";
 import { Badge, Button, Card, CardContent, CardFooter, CardHeader, CardTitle, buttonClassName } from "@property-lk/ui";
 import { formatLkr } from "../../lib/format";
-import type { Listing } from "../../lib/site-data";
+import type { ListingSummary } from "@property-lk/db";
 
-export function ListingCard({ listing }: { listing: Listing }) {
+type ListingCardModel = Omit<
+  ListingSummary,
+  "locationLabel" | "publicId" | "propertyType" | "featured"
+> & {
+  locationLabel?: string;
+  featured?: boolean;
+};
+
+export function ListingCard({ listing }: { listing: ListingCardModel }) {
   return (
     <Card className="listing-card">
       <CardHeader>
@@ -15,7 +23,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
       <CardContent>
         <p className="muted">{listing.description}</p>
         <p className="meta-row">
-          <span>{listing.area}</span>
+          <span>{listing.locationLabel ?? `${listing.area}, ${listing.district}`}</span>
           <span>{listing.bedrooms ?? "N/A"} bed</span>
           <span>{listing.bathrooms ?? "N/A"} bath</span>
         </p>

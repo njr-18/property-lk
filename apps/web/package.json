@@ -11,7 +11,11 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@property-lk/db": "workspace:*",
+    "@property-lk/search": "workspace:*",
+    "@property-lk/types": "workspace:*",
     "@property-lk/ui": "workspace:*",
+    "@property-lk/validation": "workspace:*",
     "next": "^15.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

@@ -2,7 +2,7 @@ import { Button, Card, CardContent, CardHeader, CardTitle, Checkbox, Input, Pagi
 import { ListingCard } from "../../components/listing/listing-card";
 import { PageShell } from "../../components/layout/page-shell";
 import { SectionHeading } from "../../components/ui/section-heading";
-import { searchListings } from "../../lib/search";
+import { searchListings } from "../../lib/listings";
 import { listingTypeOptions, propertyTypeOptions } from "../../lib/site-data";
 
 export default async function SearchPage({
@@ -19,7 +19,7 @@ export default async function SearchPage({
     }
   }
 
-  const results = searchListings(params);
+  const results = await searchListings(params);
   const hrefBuilder = (page: number) => {
     const nextParams = new URLSearchParams(params);
     nextParams.set("page", String(page));
@@ -40,21 +40,21 @@ export default async function SearchPage({
         <CardContent className="toolbar toolbar--filters">
           <form action="/search" className="search-form-grid">
             <Input
-              defaultValue={params.get("q") ?? ""}
+              defaultValue={results.filters.query ?? params.get("q") ?? ""}
               hint="Try an area, district, or headline."
               label="Search term"
-              name="q"
+              name="query"
               placeholder="Colombo 07, Rajagiriya, apartment..."
             />
             <Select
-              defaultValue={params.get("type") ?? ""}
+              defaultValue={results.filters.listingType}
               label="Listing type"
-              name="type"
+              name="listingType"
               options={listingTypeOptions}
               placeholder="Any type"
             />
             <Select
-              defaultValue={params.get("propertyType") ?? ""}
+              defaultValue={results.filters.propertyType ?? ""}
               label="Property type"
               name="propertyType"
               options={propertyTypeOptions}
@@ -72,12 +72,43 @@ export default async function SearchPage({
           </form>
         </CardContent>
       </Card>
-      <div className="card-grid">
-        {results.map((listing) => (
-          <ListingCard key={listing.id} listing={listing} />
-        ))}
-      </div>
-      <Pagination currentPage={1} getHref={hrefBuilder} totalPages={3} />
+      {results.issues.length > 0 ? (
+        <Card className="panel">
+          <CardHeader>
+            <CardTitle>Some filters were ignored</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="muted">
+              We applied the valid filters and skipped any values that did not pass validation.
+            </p>
+          </CardContent>
+        </Card>
+      ) : null}
+      {results.listings.length > 0 ? (
+        <>
+          <div className="card-grid">
+            {results.listings.map((listing) => (
+              <ListingCard key={listing.id} listing={listing} />
+            ))}
+          </div>
+          <Pagination
+            currentPage={results.filters.page}
+            getHref={hrefBuilder}
+            totalPages={results.totalPages}
+          />
+        </>
+      ) : (
+        <Card className="panel">
+          <CardHeader>
+            <CardTitle>No listings matched these filters</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="muted">
+              Try broadening the search term, changing the listing type, or clearing some filters.
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </PageShell>
   );
 }

@@ -76,7 +76,7 @@ export function parseListingSearchParams(input: ListingSearchRawParams): Listing
     "listingType",
     issues,
     DEFAULT_LISTING_TYPE
-  );
+  ) ?? DEFAULT_LISTING_TYPE;
   parsed.propertyType = parseEnumValue(
     input.propertyType,
     listingSearchPropertyTypes,
@@ -112,7 +112,9 @@ export function parseListingSearchParams(input: ListingSearchRawParams): Listing
     "agencyVerified",
     issues
   );
-  parsed.sort = parseEnumValue(input.sort, listingSearchSortOptions, "sort", issues, DEFAULT_SORT);
+  parsed.sort =
+    parseEnumValue(input.sort, listingSearchSortOptions, "sort", issues, DEFAULT_SORT) ??
+    DEFAULT_SORT;
 
   const parsedPage = parsePositiveInteger(input.page, "page", issues, 1);
   parsed.page = parsedPage ?? 1;

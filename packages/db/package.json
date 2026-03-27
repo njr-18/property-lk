@@ -55,6 +55,8 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@property-lk/search": "workspace:*",
+    "@property-lk/types": "workspace:*",
     "@prisma/client": "^6.5.0"
   },
   "devDependencies": {

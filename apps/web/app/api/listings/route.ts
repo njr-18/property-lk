@@ -1,9 +1,19 @@
 import { NextResponse } from "next/server";
-import { sampleListings } from "../../../lib/site-data";
+import { getLatestListings } from "../../../lib/listings";
 
-export function GET() {
-  return NextResponse.json({
-    ok: true,
-    results: sampleListings
-  });
+export async function GET() {
+  try {
+    const results = await getLatestListings();
+
+    return NextResponse.json({
+      ok: true,
+      count: results.length,
+      results
+    });
+  } catch {
+    return NextResponse.json(
+      { ok: false, error: "Listings could not be loaded" },
+      { status: 500 }
+    );
+  }
 }
