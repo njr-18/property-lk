@@ -17,6 +17,11 @@ const navItems = [
     href: "/inquiries",
     label: "Inquiries",
     description: "Lead and message review"
+  },
+  {
+    href: "/duplicates",
+    label: "Duplicates",
+    description: "Explainable duplicate review"
   }
 ] as const;
 

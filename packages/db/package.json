@@ -48,7 +48,7 @@
     "build": "pnpm run generate && tsc -p tsconfig.json",
     "lint": "pnpm run generate && tsc -p tsconfig.json --noEmit",
     "typecheck": "pnpm run generate && tsc -p tsconfig.json --noEmit",
-    "test": "echo \"No tests yet for @property-lk/db\"",
+    "test": "tsx --test tests/**/*.test.ts",
     "seed": "prisma db seed"
   },
   "prisma": {

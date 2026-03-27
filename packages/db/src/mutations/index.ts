@@ -1,4 +1,5 @@
 import { Prisma, type AvailabilityStatus, type InquiryStatus } from "@prisma/client";
+import type { AdminDuplicateClusterStatus } from "@property-lk/types";
 import { prisma } from "../client";
 
 export type CreateUserInput = {
@@ -55,6 +56,12 @@ export type UpdateListingVerificationInput = {
 export type UpdateInquiryStatusInput = {
   inquiryId: string;
   status: InquiryStatus;
+};
+
+export type UpdateDuplicateClusterStatusInput = {
+  clusterId: string;
+  status: AdminDuplicateClusterStatus;
+  reviewedByUserId: string;
 };
 
 export async function createUser(input: CreateUserInput) {
@@ -478,6 +485,38 @@ export async function updateInquiryStatus(input: UpdateInquiryStatusInput) {
       id: true,
       status: true,
       updatedAt: true
+    }
+  });
+}
+
+export async function updateDuplicateClusterStatus(input: UpdateDuplicateClusterStatusInput) {
+  const duplicateCluster = await prisma.duplicateCluster.findUnique({
+    where: {
+      id: input.clusterId
+    },
+    select: {
+      id: true
+    }
+  });
+
+  if (!duplicateCluster) {
+    throw new Error("DUPLICATE_CLUSTER_NOT_FOUND");
+  }
+
+  return prisma.duplicateCluster.update({
+    where: {
+      id: input.clusterId
+    },
+    data: {
+      status: input.status,
+      reviewedByUserId: input.reviewedByUserId,
+      reviewedAt: new Date()
+    },
+    select: {
+      id: true,
+      status: true,
+      reviewedAt: true,
+      reviewedByUserId: true
     }
   });
 }

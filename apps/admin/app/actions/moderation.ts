@@ -1,11 +1,13 @@
 "use server";
 
 import {
+  updateDuplicateClusterStatus,
   updateInquiryStatus,
   updateListingModerationStatus,
   updateListingVerification
 } from "@property-lk/db";
 import {
+  parseAdminDuplicateClusterStatusInput,
   parseAdminInquiryStatusInput,
   parseAdminListingModerationInput,
   parseAdminListingVerificationInput
@@ -127,6 +129,41 @@ export async function updateInquiryStatusAction(
   }
 }
 
+export async function updateDuplicateClusterStatusAction(
+  _previousState: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  try {
+    const adminUser = await requireAdminSessionUser();
+    const parsed = parseAdminDuplicateClusterStatusInput({
+      clusterId: getStringValue(formData.get("clusterId")),
+      status: getStringValue(formData.get("status"))
+    });
+
+    if (!parsed.ok) {
+      return {
+        status: "error",
+        message: parsed.errors[0]?.message ?? "Enter a valid duplicate review update."
+      };
+    }
+
+    await updateDuplicateClusterStatus({
+      clusterId: parsed.data.clusterId,
+      status: parsed.data.status,
+      reviewedByUserId: adminUser.id
+    });
+
+    revalidateAdminDuplicatePaths();
+
+    return {
+      status: "success",
+      message: getDuplicateClusterSuccessMessage(parsed.data.status)
+    };
+  } catch (error) {
+    return toAdminActionErrorState(error, "The duplicate cluster update could not be saved.");
+  }
+}
+
 function getStringValue(value: FormDataEntryValue | null) {
   return typeof value === "string" ? value : undefined;
 }
@@ -184,6 +221,26 @@ function revalidateAdminInquiryPaths(inquiryId: string) {
   revalidatePath(`/inquiries/${inquiryId}`);
 }
 
+function revalidateAdminDuplicatePaths() {
+  revalidatePath("/");
+  revalidatePath("/duplicates");
+}
+
+function getDuplicateClusterSuccessMessage(
+  status: "PENDING" | "CONFIRMED_DUPLICATE" | "NOT_DUPLICATE" | "MERGE_CANDIDATE"
+) {
+  switch (status) {
+    case "PENDING":
+      return "Duplicate cluster returned to pending review.";
+    case "CONFIRMED_DUPLICATE":
+      return "Cluster marked as a confirmed duplicate.";
+    case "NOT_DUPLICATE":
+      return "Cluster marked as not duplicate.";
+    case "MERGE_CANDIDATE":
+      return "Cluster marked as a merge candidate for manual follow-up.";
+  }
+}
+
 function toAdminActionErrorState(error: unknown, fallbackMessage: string): AdminActionState {
   if (error instanceof Error) {
     if (error.message === "ADMIN_AUTH_REQUIRED") {
@@ -204,6 +261,13 @@ function toAdminActionErrorState(error: unknown, fallbackMessage: string): Admin
       return {
         status: "error",
         message: "The inquiry could not be found."
+      };
+    }
+
+    if (error.message === "DUPLICATE_CLUSTER_NOT_FOUND") {
+      return {
+        status: "error",
+        message: "The duplicate cluster could not be found."
       };
     }
   }

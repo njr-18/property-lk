@@ -7,7 +7,9 @@ import {
   type PropertyType
 } from "@prisma/client";
 import { buildListingSearchQuery } from "@property-lk/search";
+import type { AdminDuplicateClusterStatus } from "@property-lk/types";
 import type { NormalizedListingSearchFilters } from "@property-lk/types";
+import type { DuplicateReason } from "../duplicates";
 import { prisma } from "../client";
 
 export type ListingSummary = {
@@ -200,6 +202,39 @@ export type AdminDashboardStats = {
   approvedListings: number;
   rejectedListings: number;
   newInquiries: number;
+};
+
+export type AdminDuplicateClusterItem = {
+  id: string;
+  listingId: string;
+  matchScore: number;
+  matchReasons: DuplicateReason[];
+  listing: {
+    id: string;
+    publicId: string;
+    slug: string;
+    title: string;
+    priceLkr: number;
+    contactPhone?: string;
+    contactWhatsapp?: string;
+    locationLabel: string;
+    primaryImageUrl?: string;
+  };
+};
+
+export type AdminDuplicateCluster = {
+  id: string;
+  clusterKey: string;
+  confidenceScore: number;
+  status: AdminDuplicateClusterStatus;
+  reviewedAt?: Date;
+  createdAt: Date;
+  reviewedBy?: {
+    id: string;
+    name?: string;
+    email: string;
+  };
+  items: AdminDuplicateClusterItem[];
 };
 
 const listingSummarySelect = {
@@ -415,6 +450,59 @@ type AdminListingDetailRecord = Prisma.ListingGetPayload<{
 
 type AdminInquiryRecord = Prisma.InquiryGetPayload<{
   select: typeof adminInquirySelect;
+}>;
+
+const adminDuplicateClusterSelect = {
+  id: true,
+  clusterKey: true,
+  confidenceScore: true,
+  status: true,
+  reviewedAt: true,
+  createdAt: true,
+  reviewedByUserId: true,
+  items: {
+    orderBy: [{ matchScore: "desc" }, { createdAt: "asc" }],
+    select: {
+      id: true,
+      listingId: true,
+      matchScore: true,
+      matchReasonsJson: true,
+      listing: {
+        select: {
+          id: true,
+          publicId: true,
+          slug: true,
+          title: true,
+          priceLkr: true,
+          contactPhone: true,
+          contactWhatsapp: true,
+          primaryLocation: {
+            select: {
+              areaName: true,
+              city: true,
+              district: true
+            }
+          },
+          images: {
+            where: {
+              isPrimary: true
+            },
+            orderBy: {
+              sortOrder: "asc"
+            },
+            take: 1,
+            select: {
+              imageUrl: true
+            }
+          }
+        }
+      }
+    }
+  }
+} satisfies Prisma.DuplicateClusterSelect;
+
+type AdminDuplicateClusterRecord = Prisma.DuplicateClusterGetPayload<{
+  select: typeof adminDuplicateClusterSelect;
 }>;
 
 export async function searchListings(
@@ -764,6 +852,49 @@ export async function getAdminInquiryById(id: string): Promise<AdminInquiryDetai
   return inquiry ? mapAdminInquiry(inquiry) : null;
 }
 
+export async function listAdminDuplicateClusters(
+  status?: AdminDuplicateClusterStatus
+): Promise<AdminDuplicateCluster[]> {
+  const [clusters, reviewedByUserIds] = await prisma.$transaction(async (tx) => {
+    const foundClusters = await tx.duplicateCluster.findMany({
+      where: status ? { status } : undefined,
+      orderBy: [{ confidenceScore: "desc" }, { createdAt: "desc" }],
+      select: adminDuplicateClusterSelect
+    });
+
+    return [
+      foundClusters,
+      Array.from(
+        new Set(
+          foundClusters
+            .map((cluster) => cluster.reviewedByUserId)
+            .filter((reviewedByUserId): reviewedByUserId is string => Boolean(reviewedByUserId))
+        )
+      )
+    ] as const;
+  });
+
+  const reviewers =
+    reviewedByUserIds.length === 0
+      ? []
+      : await prisma.user.findMany({
+          where: {
+            id: {
+              in: reviewedByUserIds
+            }
+          },
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        });
+
+  const reviewerById = new Map(reviewers.map((reviewer) => [reviewer.id, reviewer]));
+
+  return clusters.map((cluster) => mapAdminDuplicateCluster(cluster, reviewerById));
+}
+
 export async function getRelatedListings(
   listing: Pick<ListingDetail, "id" | "listingType" | "propertyType" | "district" | "area">,
   take = 3
@@ -1012,6 +1143,92 @@ function mapAdminInquiry(inquiry: AdminInquiryRecord): AdminInquiryDetail {
         }
       : undefined
   };
+}
+
+function mapAdminDuplicateCluster(
+  cluster: AdminDuplicateClusterRecord,
+  reviewerById: Map<string, { id: string; name: string | null; email: string }>
+): AdminDuplicateCluster {
+  return {
+    id: cluster.id,
+    clusterKey: cluster.clusterKey,
+    confidenceScore: cluster.confidenceScore,
+    status: cluster.status as AdminDuplicateClusterStatus,
+    reviewedAt: cluster.reviewedAt ?? undefined,
+    createdAt: cluster.createdAt,
+    reviewedBy: cluster.reviewedByUserId
+      ? {
+          id: cluster.reviewedByUserId,
+          name: reviewerById.get(cluster.reviewedByUserId)?.name ?? undefined,
+          email: reviewerById.get(cluster.reviewedByUserId)?.email ?? ""
+        }
+      : undefined,
+    items: cluster.items.map((item) => ({
+      id: item.id,
+      listingId: item.listingId,
+      matchScore: item.matchScore,
+      matchReasons: mapDuplicateReasons(item.matchReasonsJson),
+      listing: {
+        id: item.listing.id,
+        publicId: item.listing.publicId,
+        slug: item.listing.slug,
+        title: item.listing.title,
+        priceLkr: item.listing.priceLkr,
+        contactPhone: item.listing.contactPhone ?? undefined,
+        contactWhatsapp: item.listing.contactWhatsapp ?? undefined,
+        locationLabel: buildLocationLabel(
+          item.listing.primaryLocation.areaName,
+          item.listing.primaryLocation.city,
+          item.listing.primaryLocation.district
+        ),
+        primaryImageUrl: item.listing.images[0]?.imageUrl
+      }
+    }))
+  };
+}
+
+function mapDuplicateReasons(value: Prisma.JsonValue | null): DuplicateReason[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.flatMap((reason) => {
+    if (
+      !reason ||
+      typeof reason !== "object" ||
+      !("code" in reason) ||
+      !("label" in reason) ||
+      !("score" in reason) ||
+      !("detail" in reason)
+    ) {
+      return [];
+    }
+
+    const record = reason as {
+      code: string;
+      label: string;
+      score: number;
+      detail: string;
+    };
+
+    if (
+      typeof record.code !== "string" ||
+      typeof record.label !== "string" ||
+      typeof record.score !== "number" ||
+      typeof record.detail !== "string"
+    ) {
+      return [];
+    }
+
+    return [
+      {
+        code: record.code as DuplicateReason["code"],
+        label: record.label,
+        score: record.score,
+        detail: record.detail
+      }
+    ];
+  });
 }
 
 function buildLocationLabel(area: string, city: string | null, district: string) {

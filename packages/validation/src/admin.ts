@@ -1,6 +1,8 @@
 import {
+  adminDuplicateClusterStatuses,
   adminInquiryStatuses,
   adminListingModerationActions,
+  type AdminDuplicateClusterStatus,
   type AdminInquiryStatus,
   type AdminListingModerationAction
 } from "@property-lk/types";
@@ -25,6 +27,7 @@ type ValidationResult<TField extends string, TData> =
 type ListingModerationField = "listingId" | "action";
 type ListingVerificationField = "listingId";
 type InquiryStatusField = "inquiryId" | "status";
+type DuplicateClusterStatusField = "clusterId" | "status";
 
 export function parseAdminListingModerationInput(input: {
   listingId?: string;
@@ -154,6 +157,54 @@ export function parseAdminInquiryStatusInput(input: {
     data: {
       inquiryId,
       status: status as AdminInquiryStatus
+    },
+    errors
+  };
+}
+
+export function parseAdminDuplicateClusterStatusInput(input: {
+  clusterId?: string;
+  status?: string;
+}): ValidationResult<
+  DuplicateClusterStatusField,
+  {
+    clusterId: string;
+    status: AdminDuplicateClusterStatus;
+  }
+> {
+  const errors: Array<{ field: DuplicateClusterStatusField; message: string }> = [];
+  const clusterId = normalizeInput(input.clusterId);
+  const status = normalizeInput(input.status);
+
+  if (!clusterId) {
+    errors.push({
+      field: "clusterId",
+      message: "Duplicate cluster id is required."
+    });
+  }
+
+  if (
+    !status ||
+    !adminDuplicateClusterStatuses.includes(status as AdminDuplicateClusterStatus)
+  ) {
+    errors.push({
+      field: "status",
+      message: "Choose a valid duplicate review status."
+    });
+  }
+
+  if (errors.length > 0 || !clusterId || !status) {
+    return {
+      ok: false,
+      errors
+    };
+  }
+
+  return {
+    ok: true,
+    data: {
+      clusterId,
+      status: status as AdminDuplicateClusterStatus
     },
     errors
   };

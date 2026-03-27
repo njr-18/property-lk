@@ -22,3 +22,12 @@ export type AdminListingVerificationField = (typeof adminListingVerificationFiel
 export const adminInquiryStatuses = ["NEW", "CONTACTED", "CLOSED", "SPAM"] as const;
 
 export type AdminInquiryStatus = (typeof adminInquiryStatuses)[number];
+
+export const adminDuplicateClusterStatuses = [
+  "PENDING",
+  "CONFIRMED_DUPLICATE",
+  "NOT_DUPLICATE",
+  "MERGE_CANDIDATE"
+] as const;
+
+export type AdminDuplicateClusterStatus = (typeof adminDuplicateClusterStatuses)[number];
