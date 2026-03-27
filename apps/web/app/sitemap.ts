@@ -1,25 +1,46 @@
 import type { MetadataRoute } from "next";
-import { sampleAreas, sampleGuides, sampleListings } from "../lib/site-data";
+import {
+  listActiveListingSeoEntries,
+  listAreaPageSlugs,
+  listPublishedGuideSeoEntries,
+  listSeoLocations
+} from "@property-lk/db";
+import { buildAreaPath, buildListingPath, buildSearchPath, buildCanonicalUrl } from "../lib/seo";
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://property-lk.local";
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const [locations, areaSlugs, guides, listings] = await Promise.all([
+    listSeoLocations(100),
+    listAreaPageSlugs(),
+    listPublishedGuideSeoEntries(),
+    listActiveListingSeoEntries()
+  ]);
 
   return [
-    { url: `${baseUrl}/`, lastModified: new Date() },
-    { url: `${baseUrl}/search`, lastModified: new Date() },
-    { url: `${baseUrl}/rent`, lastModified: new Date() },
-    { url: `${baseUrl}/buy`, lastModified: new Date() },
-    ...sampleAreas.map((area) => ({
-      url: `${baseUrl}/areas/${area.slug}`,
+    { url: buildCanonicalUrl("/"), lastModified: new Date() },
+    { url: buildCanonicalUrl("/search"), lastModified: new Date() },
+    { url: buildCanonicalUrl("/rent"), lastModified: new Date() },
+    { url: buildCanonicalUrl("/buy"), lastModified: new Date() },
+    ...areaSlugs.map((slug) => ({
+      url: buildCanonicalUrl(buildAreaPath(slug)),
       lastModified: new Date()
     })),
-    ...sampleGuides.map((guide) => ({
-      url: `${baseUrl}/guides/${guide.slug}`,
-      lastModified: new Date()
+    ...locations.flatMap((location) => [
+      {
+        url: buildCanonicalUrl(buildSearchPath({ listingType: "rent", areaSlug: location.slug })),
+        lastModified: location.updatedAt
+      },
+      {
+        url: buildCanonicalUrl(buildSearchPath({ listingType: "sale", areaSlug: location.slug })),
+        lastModified: location.updatedAt
+      }
+    ]),
+    ...guides.map((guide) => ({
+      url: buildCanonicalUrl(`/guides/${guide.slug}`),
+      lastModified: guide.updatedAt
     })),
-    ...sampleListings.map((listing) => ({
-      url: `${baseUrl}/listings/${listing.slug}`,
-      lastModified: new Date()
+    ...listings.map((listing) => ({
+      url: buildCanonicalUrl(buildListingPath(listing.slug)),
+      lastModified: listing.updatedAt
     }))
   ];
 }

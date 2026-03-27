@@ -13,6 +13,7 @@
   "dependencies": {
     "@property-lk/db": "workspace:*",
     "@property-lk/search": "workspace:*",
+    "@property-lk/seo": "workspace:*",
     "@property-lk/types": "workspace:*",
     "@property-lk/ui": "workspace:*",
     "@property-lk/validation": "workspace:*",

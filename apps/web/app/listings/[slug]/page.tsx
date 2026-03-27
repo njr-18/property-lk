@@ -1,15 +1,44 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { Badge, Card, CardContent, CardFooter, CardHeader, CardTitle, buttonClassName } from "@property-lk/ui";
 import { notFound } from "next/navigation";
 import { PageShell } from "../../../components/layout/page-shell";
 import { InquiryForm } from "../../../components/inquiries/inquiry-form";
 import { ListingCard } from "../../../components/listing/listing-card";
 import { SaveListingButton } from "../../../components/saved-listings/save-listing-button";
+import { BreadcrumbLinks, JsonLd } from "../../../components/seo";
 import { SectionHeading } from "../../../components/ui/section-heading";
 import { getSessionUser } from "../../../lib/auth";
 import { formatLkr } from "../../../lib/format";
 import { getListingPageData } from "../../../lib/listings";
 import { getSavedListingIdsForUser } from "../../../lib/saved-listings";
+import { buildAreaPath, buildSearchPath, createBreadcrumbSchema, createListingStructuredData, createMetadata } from "../../../lib/seo";
+
+export async function generateMetadata({
+  params
+}: Readonly<{
+  params: Promise<{ slug: string }>;
+}>): Promise<Metadata> {
+  const { slug } = await params;
+  const pageData = await getListingPageData(slug);
+
+  if (!pageData) {
+    return createMetadata({
+      title: "Listing not found",
+      description: "The requested listing could not be found.",
+      path: `/listings/${slug}`
+    });
+  }
+
+  const { listing } = pageData;
+
+  return createMetadata({
+    title: listing.title,
+    description: listing.description,
+    path: `/listings/${listing.slug}`,
+    type: "article"
+  });
+}
 
 export default async function ListingDetailsPage({
   params
@@ -32,9 +61,31 @@ export default async function ListingDetailsPage({
       )
     : [];
   const savedListingIdSet = new Set(savedListingIds);
+  const breadcrumbItems = [
+    { name: "Home", path: "/" },
+    { name: "Search", path: "/search" },
+    { name: listing.area, path: buildAreaPath(listing.areaSlug) },
+    { name: listing.title, path: `/listings/${listing.slug}` }
+  ];
+  const listingSchema = createListingStructuredData({
+    title: listing.title,
+    description: listing.description,
+    path: `/listings/${listing.slug}`,
+    listingType: listing.listingType,
+    propertyType: listing.propertyType,
+    priceLkr: listing.priceLkr,
+    area: listing.area,
+    district: listing.district,
+    bedrooms: listing.bedrooms,
+    bathrooms: listing.bathrooms,
+    imageUrl: listing.primaryImageUrl
+  });
 
   return (
     <PageShell>
+      <JsonLd data={createBreadcrumbSchema(breadcrumbItems)} />
+      <JsonLd data={listingSchema} />
+      <BreadcrumbLinks items={breadcrumbItems} />
       <SectionHeading
         eyebrow={listing.listingType === "rent" ? "For rent" : "For sale"}
         title={listing.title}
@@ -49,6 +100,12 @@ export default async function ListingDetailsPage({
           <CardContent>
           <p className="muted">
             {listing.locationLabel}
+          </p>
+          <p className="meta-row">
+            <Link href={buildAreaPath(listing.areaSlug)}>Explore {listing.area}</Link>
+            <Link href={buildSearchPath({ listingType: listing.listingType, areaSlug: listing.areaSlug })}>
+              Browse similar {listing.listingType === "rent" ? "rentals" : "sales"}
+            </Link>
           </p>
           <div className="table">
             <div className="table-row">

@@ -3,6 +3,7 @@ import { Badge, Card, CardContent, CardFooter, CardHeader, CardTitle, buttonClas
 import { formatLkr } from "../../lib/format";
 import type { ListingSummary } from "@property-lk/db";
 import { SaveListingButton } from "../saved-listings/save-listing-button";
+import { buildAreaPath, buildSearchPath } from "../../lib/seo";
 
 type ListingCardModel = Omit<
   ListingSummary,
@@ -26,9 +27,14 @@ export function ListingCard({ listing }: { listing: ListingCardModel }) {
       <CardContent>
         <p className="muted">{listing.description}</p>
         <p className="meta-row">
-          <span>{listing.locationLabel ?? `${listing.area}, ${listing.district}`}</span>
+          <Link href={buildAreaPath(listing.areaSlug)}>{listing.locationLabel ?? `${listing.area}, ${listing.district}`}</Link>
           <span>{listing.bedrooms ?? "N/A"} bed</span>
           <span>{listing.bathrooms ?? "N/A"} bath</span>
+        </p>
+        <p className="meta-row">
+          <Link href={buildSearchPath({ areaSlug: listing.areaSlug, listingType: listing.listingType })}>
+            More {listing.listingType === "rent" ? "rentals" : "sales"} in {listing.area}
+          </Link>
         </p>
         <strong>{formatLkr(listing.priceLkr)}</strong>
       </CardContent>

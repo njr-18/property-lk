@@ -14,6 +14,9 @@
       "@property-lk/search": [
         "../../packages/search/src/index.ts"
       ],
+      "@property-lk/seo": [
+        "../../packages/seo/src/index.ts"
+      ],
       "@property-lk/types": [
         "../../packages/types/src/index.ts"
       ],

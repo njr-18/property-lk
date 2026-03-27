@@ -11,6 +11,7 @@ import type { AdminDuplicateClusterStatus } from "@property-lk/types";
 import type { NormalizedListingSearchFilters } from "@property-lk/types";
 import type { DuplicateReason } from "../duplicates";
 import { prisma } from "../client";
+export * from "./seo";
 
 export type ListingSummary = {
   id: string;
@@ -25,6 +26,7 @@ export type ListingSummary = {
   bathrooms?: number;
   featured: boolean;
   area: string;
+  areaSlug: string;
   district: string;
   locationLabel: string;
   primaryImageUrl?: string;
@@ -251,6 +253,7 @@ const listingSummarySelect = {
   isFeatured: true,
   primaryLocation: {
     select: {
+      slug: true,
       areaName: true,
       district: true,
       city: true
@@ -988,6 +991,7 @@ function mapListingSummary(listing: ListingSummaryRecord): ListingSummary {
     bathrooms: listing.bathrooms ?? undefined,
     featured: listing.isFeatured,
     area: listing.primaryLocation.areaName,
+    areaSlug: listing.primaryLocation.slug,
     district: listing.primaryLocation.district,
     locationLabel: buildLocationLabel(
       listing.primaryLocation.areaName,

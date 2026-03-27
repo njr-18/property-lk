@@ -31,6 +31,7 @@ export type Guide = {
 
 export const navLinks = [
   { href: "/search", label: "Search" },
+  { href: "/areas", label: "Areas" },
   { href: "/rent", label: "Rent" },
   { href: "/buy", label: "Buy" },
   { href: "/guides", label: "Guides" },
@@ -40,6 +41,7 @@ export const navLinks = [
 export const mobileNavLinks = [
   { href: "/", label: "Home", description: "Overview and featured inventory" },
   { href: "/search", label: "Search", description: "Filters, cards, and comparison entry" },
+  { href: "/areas", label: "Areas", description: "Local guides and linked search routes" },
   { href: "/saved/listings", label: "Saved", description: "Listings and searches in one place" },
   { href: "/account", label: "Account", description: "Profile and inquiry surfaces" }
 ] as const;
@@ -49,6 +51,7 @@ export const footerLinkGroups = [
     title: "Explore",
     links: [
       { href: "/search", label: "Search listings" },
+      { href: "/areas", label: "Browse areas" },
       { href: "/compare", label: "Compare homes" },
       { href: "/guides", label: "Read guides" }
     ]
