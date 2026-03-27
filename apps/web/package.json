@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings=0",
-    "test": "echo \"No tests yet for @property-lk/web\"",
+    "test": "..\\..\\packages\\db\\node_modules\\.bin\\tsx.CMD --test tests/integration/**/*.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

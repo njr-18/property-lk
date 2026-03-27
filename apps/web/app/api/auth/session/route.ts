@@ -1,15 +1,12 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "../../../../lib/auth";
 
-async function handler() {
+export async function GET() {
   const user = await getSessionUser();
 
   return NextResponse.json({
     ok: true,
     authenticated: Boolean(user),
-    user,
-    message: "Custom email/password auth is active for the MVP."
+    user
   });
 }
-
-export { handler as GET, handler as POST };

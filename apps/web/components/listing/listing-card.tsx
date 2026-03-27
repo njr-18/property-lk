@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Badge, Button, Card, CardContent, CardFooter, CardHeader, CardTitle, buttonClassName } from "@property-lk/ui";
+import { Badge, Card, CardContent, CardFooter, CardHeader, CardTitle, buttonClassName } from "@property-lk/ui";
 import { formatLkr } from "../../lib/format";
 import type { ListingSummary } from "@property-lk/db";
+import { SaveListingButton } from "../saved-listings/save-listing-button";
 
 type ListingCardModel = Omit<
   ListingSummary,
@@ -9,6 +10,8 @@ type ListingCardModel = Omit<
 > & {
   locationLabel?: string;
   featured?: boolean;
+  isSaved?: boolean;
+  isAuthenticated?: boolean;
 };
 
 export function ListingCard({ listing }: { listing: ListingCardModel }) {
@@ -33,9 +36,12 @@ export function ListingCard({ listing }: { listing: ListingCardModel }) {
         <Link className={buttonClassName({ variant: "secondary", size: "md" })} href={`/listings/${listing.slug}`}>
           View listing
         </Link>
-        <Button disabled variant="ghost">
-          Save
-        </Button>
+        <SaveListingButton
+          initialSaved={listing.isSaved ?? false}
+          isAuthenticated={listing.isAuthenticated ?? false}
+          listingId={listing.id}
+          variant="ghost"
+        />
       </CardFooter>
     </Card>
   );

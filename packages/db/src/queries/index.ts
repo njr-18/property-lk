@@ -21,6 +21,14 @@ export type ListingSummary = {
   primaryImageUrl?: string;
 };
 
+export type AuthUser = {
+  id: string;
+  name?: string;
+  email: string;
+  role: "USER" | "AGENT" | "OWNER" | "ADMIN";
+  passwordHash?: string;
+};
+
 export type ListingDetail = ListingSummary & {
   city?: string;
   addressLine?: string;
@@ -56,6 +64,14 @@ export type ListingSearchResult = {
   total: number;
   totalPages: number;
   filters: NormalizedListingSearchFilters;
+  listings: ListingSummary[];
+};
+
+export type SavedListingsPage = {
+  total: number;
+  totalPages: number;
+  page: number;
+  pageSize: number;
   listings: ListingSummary[];
 };
 
@@ -139,6 +155,16 @@ type ListingDetailRecord = Prisma.ListingGetPayload<{
   select: typeof listingDetailSelect;
 }>;
 
+type AuthUserRecord = Prisma.UserGetPayload<{
+  select: {
+    id: true;
+    name: true;
+    email: true;
+    role: true;
+    passwordHash: true;
+  };
+}>;
+
 export async function searchListings(
   filters: NormalizedListingSearchFilters
 ): Promise<ListingSearchResult> {
@@ -189,6 +215,109 @@ export async function getListingByIdentifier(identifier: string): Promise<Listin
   });
 
   return listing ? mapListingDetail(listing) : null;
+}
+
+export async function getUserByEmail(email: string): Promise<AuthUser | null> {
+  const user = await prisma.user.findUnique({
+    where: {
+      email
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      passwordHash: true
+    }
+  });
+
+  return user ? mapAuthUser(user) : null;
+}
+
+export async function getUserById(id: string): Promise<AuthUser | null> {
+  const user = await prisma.user.findUnique({
+    where: {
+      id
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      passwordHash: true
+    }
+  });
+
+  return user ? mapAuthUser(user) : null;
+}
+
+export async function getSavedListingIds(userId: string, listingIds: string[]): Promise<string[]> {
+  if (listingIds.length === 0) {
+    return [];
+  }
+
+  const savedListings = await prisma.savedListing.findMany({
+    where: {
+      userId,
+      listingId: {
+        in: listingIds
+      }
+    },
+    select: {
+      listingId: true
+    }
+  });
+
+  return savedListings.map((savedListing) => savedListing.listingId);
+}
+
+export async function listSavedListings(
+  userId: string,
+  page = 1,
+  pageSize = 12
+): Promise<SavedListingsPage> {
+  const safePage = Math.max(1, Math.floor(page));
+  const safePageSize = Math.max(1, Math.floor(pageSize));
+  const skip = (safePage - 1) * safePageSize;
+
+  const [total, savedListings] = await prisma.$transaction([
+    prisma.savedListing.count({
+      where: {
+        userId,
+        listing: {
+          availabilityStatus: "ACTIVE",
+          deletedAt: null
+        }
+      }
+    }),
+    prisma.savedListing.findMany({
+      where: {
+        userId,
+        listing: {
+          availabilityStatus: "ACTIVE",
+          deletedAt: null
+        }
+      },
+      orderBy: {
+        createdAt: "desc"
+      },
+      skip,
+      take: safePageSize,
+      select: {
+        listing: {
+          select: listingSummarySelect
+        }
+      }
+    })
+  ]);
+
+  return {
+    total,
+    totalPages: Math.max(1, Math.ceil(total / safePageSize)),
+    page: safePage,
+    pageSize: safePageSize,
+    listings: savedListings.map((savedListing) => mapListingSummary(savedListing.listing))
+  };
 }
 
 export async function getRelatedListings(
@@ -291,6 +420,16 @@ function mapListingSummary(listing: ListingSummaryRecord): ListingSummary {
       listing.primaryLocation.district
     ),
     primaryImageUrl: listing.images[0]?.imageUrl
+  };
+}
+
+function mapAuthUser(user: AuthUserRecord): AuthUser {
+  return {
+    id: user.id,
+    name: user.name ?? undefined,
+    email: user.email,
+    role: user.role,
+    passwordHash: user.passwordHash ?? undefined
   };
 }
 

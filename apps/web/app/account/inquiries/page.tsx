@@ -1,7 +1,10 @@
 import { PageShell } from "../../../components/layout/page-shell";
 import { SectionHeading } from "../../../components/ui/section-heading";
+import { requireSessionUser } from "../../../lib/auth";
 
-export default function InquiriesPage() {
+export default async function InquiriesPage() {
+  await requireSessionUser("/account/inquiries");
+
   return (
     <PageShell>
       <SectionHeading

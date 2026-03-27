@@ -1,11 +1,14 @@
 import Link from "next/link";
-import { Badge, Button, Card, CardContent, CardFooter, CardHeader, CardTitle, buttonClassName } from "@property-lk/ui";
+import { Badge, Card, CardContent, CardFooter, CardHeader, CardTitle, buttonClassName } from "@property-lk/ui";
 import { notFound } from "next/navigation";
 import { PageShell } from "../../../components/layout/page-shell";
 import { ListingCard } from "../../../components/listing/listing-card";
+import { SaveListingButton } from "../../../components/saved-listings/save-listing-button";
 import { SectionHeading } from "../../../components/ui/section-heading";
+import { getSessionUser } from "../../../lib/auth";
 import { formatLkr } from "../../../lib/format";
 import { getListingPageData } from "../../../lib/listings";
+import { getSavedListingIdsForUser } from "../../../lib/saved-listings";
 
 export default async function ListingDetailsPage({
   params
@@ -20,6 +23,14 @@ export default async function ListingDetailsPage({
   }
 
   const { listing, relatedListings } = pageData;
+  const user = await getSessionUser();
+  const savedListingIds = user
+    ? await getSavedListingIdsForUser(
+        user.id,
+        [listing.id, ...relatedListings.map((relatedListing) => relatedListing.id)]
+      )
+    : [];
+  const savedListingIdSet = new Set(savedListingIds);
 
   return (
     <PageShell>
@@ -58,7 +69,12 @@ export default async function ListingDetailsPage({
           </div>
           </CardContent>
           <CardFooter>
-            <Button disabled>Save listing</Button>
+            <SaveListingButton
+              initialSaved={savedListingIdSet.has(listing.id)}
+              isAuthenticated={Boolean(user)}
+              listingId={listing.id}
+              variant="primary"
+            />
             <Link className={buttonClassName({ variant: "secondary", size: "md" })} href="/compare">
               Compare
             </Link>
@@ -98,7 +114,14 @@ export default async function ListingDetailsPage({
         {relatedListings.length > 0 ? (
           <div className="card-grid">
             {relatedListings.map((relatedListing) => (
-              <ListingCard key={relatedListing.id} listing={relatedListing} />
+              <ListingCard
+                key={relatedListing.id}
+                listing={{
+                  ...relatedListing,
+                  isAuthenticated: Boolean(user),
+                  isSaved: savedListingIdSet.has(relatedListing.id)
+                }}
+              />
             ))}
           </div>
         ) : (

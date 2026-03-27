@@ -3,10 +3,20 @@ import { Badge, Card, CardFooter, CardHeader, CardTitle, buttonClassName } from 
 import { ListingCard } from "../../components/listing/listing-card";
 import { PageShell } from "../../components/layout/page-shell";
 import { SectionHeading } from "../../components/ui/section-heading";
+import { getSessionUser } from "../../lib/auth";
 import { formatLkr } from "../../lib/format";
-import { sampleListings, siteStats } from "../../lib/site-data";
+import { getLatestListings } from "../../lib/listings";
+import { getSavedListingIdsForUser } from "../../lib/saved-listings";
+import { siteStats } from "../../lib/site-data";
 
-export default function MarketingHomePage() {
+export default async function MarketingHomePage() {
+  const featuredListings = await getLatestListings(3);
+  const user = await getSessionUser();
+  const savedListingIds = user
+    ? await getSavedListingIdsForUser(user.id, featuredListings.map((listing) => listing.id))
+    : [];
+  const savedListingIdSet = new Set(savedListingIds);
+
   return (
     <PageShell>
       <section className="hero-panel site-grid">
@@ -42,8 +52,15 @@ export default function MarketingHomePage() {
             </p>
           </CardHeader>
           <div className="card-grid">
-            {sampleListings.map((listing) => (
-              <ListingCard key={listing.id} listing={listing} />
+            {featuredListings.map((listing) => (
+              <ListingCard
+                key={listing.id}
+                listing={{
+                  ...listing,
+                  isAuthenticated: Boolean(user),
+                  isSaved: savedListingIdSet.has(listing.id)
+                }}
+              />
             ))}
           </div>
         </Card>

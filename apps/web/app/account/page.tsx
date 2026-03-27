@@ -2,14 +2,17 @@ import Link from "next/link";
 import { Card, CardContent, CardFooter, CardGrid, CardHeader, CardTitle, buttonClassName } from "@property-lk/ui";
 import { PageShell } from "../../components/layout/page-shell";
 import { SectionHeading } from "../../components/ui/section-heading";
+import { requireSessionUser } from "../../lib/auth";
 
-export default function AccountPage() {
+export default async function AccountPage() {
+  const user = await requireSessionUser("/account");
+
   return (
     <PageShell>
       <SectionHeading
         eyebrow="Account"
         title="Account basics"
-        description="A future home for profile details, preferences, and notification settings."
+        description={`Signed in as ${user.name ?? user.email}. Profile details and preferences can grow here later.`}
       />
       <CardGrid>
         <Card>
@@ -35,6 +38,20 @@ export default function AccountPage() {
           <CardFooter>
             <Link className={buttonClassName({ variant: "secondary", size: "md" })} href="/saved/listings">
               View saved listings
+            </Link>
+          </CardFooter>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Sign-in details</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="muted">{user.email}</p>
+            <p className="muted">Role: {user.role.toLowerCase()}</p>
+          </CardContent>
+          <CardFooter>
+            <Link className={buttonClassName({ variant: "secondary", size: "md" })} href="/saved/listings">
+              Review saved listings
             </Link>
           </CardFooter>
         </Card>

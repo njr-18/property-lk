@@ -2,7 +2,9 @@ import { Button, Card, CardContent, CardHeader, CardTitle, Checkbox, Input, Pagi
 import { ListingCard } from "../../components/listing/listing-card";
 import { PageShell } from "../../components/layout/page-shell";
 import { SectionHeading } from "../../components/ui/section-heading";
+import { getSessionUser } from "../../lib/auth";
 import { searchListings } from "../../lib/listings";
+import { getSavedListingIdsForUser } from "../../lib/saved-listings";
 import { listingTypeOptions, propertyTypeOptions } from "../../lib/site-data";
 
 export default async function SearchPage({
@@ -20,6 +22,11 @@ export default async function SearchPage({
   }
 
   const results = await searchListings(params);
+  const user = await getSessionUser();
+  const savedListingIds = user
+    ? await getSavedListingIdsForUser(user.id, results.listings.map((listing) => listing.id))
+    : [];
+  const savedListingIdSet = new Set(savedListingIds);
   const hrefBuilder = (page: number) => {
     const nextParams = new URLSearchParams(params);
     nextParams.set("page", String(page));
@@ -88,7 +95,14 @@ export default async function SearchPage({
         <>
           <div className="card-grid">
             {results.listings.map((listing) => (
-              <ListingCard key={listing.id} listing={listing} />
+              <ListingCard
+                key={listing.id}
+                listing={{
+                  ...listing,
+                  isAuthenticated: Boolean(user),
+                  isSaved: savedListingIdSet.has(listing.id)
+                }}
+              />
             ))}
           </div>
           <Pagination

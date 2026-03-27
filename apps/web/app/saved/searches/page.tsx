@@ -1,8 +1,11 @@
 import { PageShell } from "../../../components/layout/page-shell";
 import { EmptyState } from "../../../components/ui/empty-state";
 import { SectionHeading } from "../../../components/ui/section-heading";
+import { requireSessionUser } from "../../../lib/auth";
 
-export default function SavedSearchesPage() {
+export default async function SavedSearchesPage() {
+  await requireSessionUser("/saved/searches");
+
   return (
     <PageShell>
       <SectionHeading
