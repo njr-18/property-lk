@@ -1,3 +1,4 @@
+import { Pagination } from "@property-lk/ui";
 import { ListingCard } from "../../../components/listing/listing-card";
 import { PageShell } from "../../../components/layout/page-shell";
 import { SectionHeading } from "../../../components/ui/section-heading";
@@ -16,6 +17,7 @@ export default function SavedListingsPage() {
           <ListingCard key={listing.id} listing={listing} />
         ))}
       </div>
+      <Pagination currentPage={1} getHref={(page) => `/saved/listings?page=${page}`} totalPages={2} />
     </PageShell>
   );
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { EmptyState as SharedEmptyState, buttonClassName } from "@property-lk/ui";
 
 export function EmptyState({
   title,
@@ -12,14 +13,14 @@ export function EmptyState({
   actionLabel?: string;
 }>) {
   return (
-    <div className="panel">
-      <h2>{title}</h2>
-      <p className="muted">{description}</p>
-      <div className="button-row">
-        <Link className="button primary" href={href}>
+    <SharedEmptyState
+      action={
+        <Link className={buttonClassName({ variant: "primary", size: "md" })} href={href}>
           {actionLabel}
         </Link>
-      </div>
-    </div>
+      }
+      description={description}
+      title={title}
+    />
   );
 }

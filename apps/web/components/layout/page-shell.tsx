@@ -5,5 +5,5 @@ export function PageShell({
 }: Readonly<{
   children: ReactNode;
 }>) {
-  return <section className="site-grid">{children}</section>;
+  return <section className="site-grid route-stack">{children}</section>;
 }

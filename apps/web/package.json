@@ -6,11 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings=0",
     "test": "echo \"No tests yet for @property-lk/web\"",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@property-lk/ui": "workspace:*",
     "next": "^15.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
@@ -20,6 +21,8 @@
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^15.3.0",
     "postcss": "^8.4.49",
     "tailwindcss": "^4.1.4",
     "typescript": "^5.8.0"

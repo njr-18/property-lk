@@ -2,12 +2,52 @@
   "name": "@property-lk/db",
   "version": "0.1.0",
   "private": true,
-  "main": "src/index.ts",
-  "types": "src/index.ts",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "default": "./dist/client.js"
+    },
+    "./queries": {
+      "types": "./dist/queries/index.d.ts",
+      "default": "./dist/queries/index.js"
+    },
+    "./mutations": {
+      "types": "./dist/mutations/index.d.ts",
+      "default": "./dist/mutations/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "typesVersions": {
+    "*": {
+      "client": [
+        "./dist/client.d.ts"
+      ],
+      "queries": [
+        "./dist/queries/index.d.ts"
+      ],
+      "mutations": [
+        "./dist/mutations/index.d.ts"
+      ]
+    }
+  },
+  "files": [
+    "dist",
+    "prisma"
+  ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "lint": "tsc -p tsconfig.json --noEmit",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "generate": "prisma generate",
+    "build": "pnpm run generate && tsc -p tsconfig.json",
+    "lint": "pnpm run generate && tsc -p tsconfig.json --noEmit",
+    "typecheck": "pnpm run generate && tsc -p tsconfig.json --noEmit",
     "test": "echo \"No tests yet for @property-lk/db\"",
     "seed": "prisma db seed"
   },

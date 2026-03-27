@@ -37,6 +37,46 @@ export const navLinks = [
   { href: "/post-property", label: "Post Property" }
 ] as const;
 
+export const mobileNavLinks = [
+  { href: "/", label: "Home", description: "Overview and featured inventory" },
+  { href: "/search", label: "Search", description: "Filters, cards, and comparison entry" },
+  { href: "/saved/listings", label: "Saved", description: "Listings and searches in one place" },
+  { href: "/account", label: "Account", description: "Profile and inquiry surfaces" }
+] as const;
+
+export const footerLinkGroups = [
+  {
+    title: "Explore",
+    links: [
+      { href: "/search", label: "Search listings" },
+      { href: "/compare", label: "Compare homes" },
+      { href: "/guides", label: "Read guides" }
+    ]
+  },
+  {
+    title: "Saved",
+    links: [
+      { href: "/saved/listings", label: "Saved listings" },
+      { href: "/saved/searches", label: "Saved searches" },
+      { href: "/account", label: "Account overview" }
+    ]
+  }
+] as const;
+
+export const listingTypeOptions = [
+  { label: "Rent", value: "rent" },
+  { label: "Sale", value: "sale" }
+] as const;
+
+export const propertyTypeOptions = [
+  { label: "Room", value: "room" },
+  { label: "Annex", value: "annex" },
+  { label: "House", value: "house" },
+  { label: "Apartment", value: "apartment" },
+  { label: "Land", value: "land" },
+  { label: "Commercial", value: "commercial" }
+] as const;
+
 export const sampleListings: Listing[] = [
   {
     id: "lst_001",

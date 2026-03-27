@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { Badge, Button, Card, CardContent, CardFooter, CardHeader, CardTitle, buttonClassName } from "@property-lk/ui";
 import { notFound } from "next/navigation";
 import { PageShell } from "../../../components/layout/page-shell";
 import { SectionHeading } from "../../../components/ui/section-heading";
@@ -24,8 +26,12 @@ export default async function ListingDetailsPage({
         description={listing.description}
       />
       <div className="split-grid">
-        <div className="panel">
-          <h2>{formatLkr(listing.priceLkr)}</h2>
+        <Card className="panel">
+          <CardHeader>
+            <Badge>{listing.area}</Badge>
+            <CardTitle>{formatLkr(listing.priceLkr)}</CardTitle>
+          </CardHeader>
+          <CardContent>
           <p className="muted">
             {listing.area}, {listing.district}
           </p>
@@ -43,13 +49,24 @@ export default async function ListingDetailsPage({
               <span>{listing.propertyType}</span>
             </div>
           </div>
-        </div>
-        <div className="panel">
-          <h3>Future-ready details</h3>
+          </CardContent>
+          <CardFooter>
+            <Button disabled>Save listing</Button>
+            <Link className={buttonClassName({ variant: "secondary", size: "md" })} href="/compare">
+              Compare
+            </Link>
+          </CardFooter>
+        </Card>
+        <Card className="panel">
+          <CardHeader>
+            <CardTitle>Future-ready details</CardTitle>
+          </CardHeader>
+          <CardContent>
           <p className="muted">
             This template can absorb verification badges, contact actions, image galleries, and map coordinates.
           </p>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </PageShell>
   );

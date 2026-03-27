@@ -1,3 +1,4 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@property-lk/ui";
 import { notFound } from "next/navigation";
 import { PageShell } from "../../../../components/layout/page-shell";
 import { SectionHeading } from "../../../../components/ui/section-heading";
@@ -18,9 +19,14 @@ export default async function GuidePage({
   return (
     <PageShell>
       <SectionHeading eyebrow="Guide" title={guide.title} description={guide.excerpt} />
-      <article className="panel">
-        <p>{guide.body}</p>
-      </article>
+      <Card className="panel">
+        <CardHeader>
+          <CardTitle>Guide content</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p>{guide.body}</p>
+        </CardContent>
+      </Card>
     </PageShell>
   );
 }

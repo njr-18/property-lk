@@ -1,3 +1,4 @@
+import { Badge, Card, CardContent, CardHeader, CardTitle } from "@property-lk/ui";
 import { PageShell } from "../../components/layout/page-shell";
 import { SectionHeading } from "../../components/ui/section-heading";
 import { sampleListings } from "../../lib/site-data";
@@ -14,11 +15,16 @@ export default function ComparePage() {
       />
       <div className="split-grid">
         {[first, second].map((listing) => (
-          <article className="card" key={listing.id}>
-            <h3>{listing.title}</h3>
+          <Card key={listing.id}>
+            <CardHeader>
+              <Badge variant="neutral">{listing.listingType}</Badge>
+              <CardTitle>{listing.title}</CardTitle>
+            </CardHeader>
+            <CardContent>
             <p className="muted">{listing.area}</p>
             <p>{listing.description}</p>
-          </article>
+            </CardContent>
+          </Card>
         ))}
       </div>
     </PageShell>

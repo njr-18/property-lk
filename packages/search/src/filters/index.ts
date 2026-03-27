@@ -1,4 +1,3 @@
-export const defaultSearchFilters = {
-  listingType: "rent",
-  sort: "recommended"
-} as const;
+import { getDefaultListingSearchFilters } from "@property-lk/validation";
+
+export const defaultSearchFilters = getDefaultListingSearchFilters();

@@ -16,12 +16,12 @@
     },
     "lint": {
       "dependsOn": [
-        "^lint"
+        "^build"
       ]
     },
     "typecheck": {
       "dependsOn": [
-        "^typecheck"
+        "^build"
       ],
       "outputs": []
     },
@@ -32,6 +32,10 @@
       "outputs": [
         "coverage/**"
       ]
+    },
+    "seed": {
+      "cache": false,
+      "outputs": []
     },
     "format": {
       "cache": false

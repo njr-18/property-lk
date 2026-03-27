@@ -1,16 +1,18 @@
 type ListingDetailsPageProps = {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 };
 
-export default function ListingDetailsPage({ params }: ListingDetailsPageProps) {
+export default async function ListingDetailsPage({ params }: ListingDetailsPageProps) {
+  const { id } = await params;
+
   return (
     <div className="stack">
       <header className="topbar">
         <div>
           <p className="brand-kicker">Listings</p>
-          <h1 className="page-title">Listing {params.id}</h1>
+          <h1 className="page-title">Listing {id}</h1>
           <p className="subtle">Detailed moderation view for review notes and trust signals.</p>
         </div>
         <span className="pill">Pending review</span>

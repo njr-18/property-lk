@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { navLinks } from "../../lib/site-data";
+import { SiteNavigation } from "./site-navigation";
 
 export function SiteHeader() {
   return (
@@ -8,13 +8,7 @@ export function SiteHeader() {
         <span className="brand-mark" aria-hidden="true" />
         <span>Property LK</span>
       </Link>
-      <nav aria-label="Primary">
-        {navLinks.map((link) => (
-          <Link key={link.href} href={link.href}>
-            {link.label}
-          </Link>
-        ))}
-      </nav>
+      <SiteNavigation />
     </header>
   );
 }

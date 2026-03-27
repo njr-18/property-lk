@@ -109,6 +109,9 @@ model Location {
   children         Location[] @relation("LocationTree")
   listings         Listing[]
   areaPages        AreaPage[]
+
+  @@index([district, city, areaName])
+  @@index([parentLocationId])
 }
 
 model Listing {
@@ -191,6 +194,8 @@ model ListingImage {
   isPrimary      Boolean  @default(false)
   createdAt      DateTime @default(now())
   listing        Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId, sortOrder])
 }
 
 model ListingFeature {
@@ -226,6 +231,9 @@ model ListingSourceRecord {
   rawPayloadJson   Json?
   importedAt       DateTime @default(now())
   listing          Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId, importedAt])
+  @@index([sourceName, sourceExternalId])
 }
 
 model SavedListing {
@@ -267,6 +275,9 @@ model Inquiry {
   updatedAt              DateTime      @updatedAt
   listing                Listing       @relation(fields: [listingId], references: [id], onDelete: Cascade)
   user                   User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([listingId, status, createdAt])
+  @@index([userId, createdAt])
 }
 
 model ListingVerification {
@@ -293,6 +304,8 @@ model DuplicateCluster {
   reviewedAt       DateTime?
   createdAt        DateTime               @default(now())
   items            DuplicateClusterItem[]
+
+  @@index([status, createdAt])
 }
 
 model DuplicateClusterItem {
@@ -306,6 +319,7 @@ model DuplicateClusterItem {
   listing            Listing          @relation(fields: [listingId], references: [id], onDelete: Cascade)
 
   @@unique([duplicateClusterId, listingId])
+  @@index([listingId, matchScore])
 }
 
 model Report {
@@ -319,6 +333,8 @@ model Report {
   resolvedAt       DateTime?
   resolvedByUserId String?
   listing          Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId, status, createdAt])
 }
 
 model AreaPage {
@@ -336,6 +352,7 @@ model AreaPage {
   location        Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
 
   @@unique([locationId, pageType])
+  @@index([pageType, published])
 }
 
 model Guide {
@@ -350,6 +367,8 @@ model Guide {
   publishedAt     DateTime?
   updatedAt       DateTime @updatedAt
   author          User?    @relation(fields: [authorUserId], references: [id], onDelete: SetNull)
+
+  @@index([publishedAt])
 }
 
 model SearchEvent {
@@ -360,6 +379,9 @@ model SearchEvent {
   filtersJson Json?
   resultCount Int?
   createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([userId, createdAt])
 }
 
 model ListingViewEvent {
@@ -369,4 +391,7 @@ model ListingViewEvent {
   sessionId String?
   source    String?
   createdAt DateTime @default(now())
+
+  @@index([listingId, createdAt])
+  @@index([userId, createdAt])
 }

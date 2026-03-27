@@ -1,13 +1,14 @@
-import Link from "next/link";
+import { EmptyState } from "../components/ui/empty-state";
 
 export default function NotFound() {
   return (
-    <div className="panel" style={{ marginTop: 32 }}>
-      <h1>Page not found</h1>
-      <p className="muted">The page you tried to open does not exist yet.</p>
-      <Link className="button primary" href="/">
-        Return home
-      </Link>
+    <div style={{ marginTop: 32 }}>
+      <EmptyState
+        actionLabel="Return home"
+        description="The page you tried to open is not part of the current MVP shell."
+        href="/"
+        title="Page not found"
+      />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
+import { MobileBottomNav } from "../components/layout/mobile-bottom-nav";
 import { SiteFooter } from "../components/layout/site-footer";
 import { SiteHeader } from "../components/layout/site-header";
 
@@ -19,10 +20,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>
+      <body className="app-body">
         <SiteHeader />
         <main>{children}</main>
         <SiteFooter />
+        <MobileBottomNav />
       </body>
     </html>
   );
