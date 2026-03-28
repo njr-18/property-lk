@@ -1,6 +1,7 @@
 import { listSeoLocations } from "../../lib/areas";
 import { SearchResultsPage } from "../../components/search/search-results-page";
 import { createBreadcrumbSchema, createMetadata, buildAreaPath } from "../../lib/seo";
+import { parseListingTypeParam } from "../../lib/search";
 import { buildSearchPath } from "@property-lk/seo";
 import type { Metadata } from "next";
 
@@ -12,27 +13,33 @@ export async function generateMetadata({
   const resolvedSearchParams: Record<string, string | string[] | undefined> = await Promise.resolve(
     searchParams ?? {}
   );
-  const listingType =
-    typeof resolvedSearchParams["listingType"] === "string" ? resolvedSearchParams["listingType"] : "rent";
+  const listingType = parseListingTypeParam(
+    typeof resolvedSearchParams["listingType"] === "string"
+      ? resolvedSearchParams["listingType"]
+      : undefined
+  );
   const area = typeof resolvedSearchParams["area"] === "string" ? resolvedSearchParams["area"] : undefined;
   const query =
     typeof resolvedSearchParams["query"] === "string" ? resolvedSearchParams["query"] : undefined;
-  const title = area
+  const title = area && listingType
     ? `${listingType === "sale" ? "Properties for Sale" : "Properties for Rent"} in ${area}`
     : query
       ? `Search property for ${query}`
       : "Search property listings";
-  const description = area
+  const description = area && listingType
     ? `Browse live ${listingType === "sale" ? "sale" : "rental"} listings in ${area}, Sri Lanka.`
     : "Search Sri Lankan property listings by area, property type, and budget.";
 
   return createMetadata({
     title,
     description,
-    path: buildSearchPath({
-      listingType: listingType === "sale" ? "sale" : "rent",
-      areaSlug: area
-    })
+    path:
+      area && listingType
+        ? buildSearchPath({
+            listingType,
+            areaSlug: area
+          })
+        : buildSearchPath()
   });
 }
 

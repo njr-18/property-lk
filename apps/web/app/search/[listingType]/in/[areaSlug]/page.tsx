@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { SearchResultsPage } from "../../../../../components/search/search-results-page";
 import { getSeoLocationBySlug, listAreaPageSlugs, listRelatedSeoLocations } from "../../../../../lib/areas";
 import { buildAreaPath, buildSearchPath, createBreadcrumbSchema, createMetadata } from "../../../../../lib/seo";
+import { parseListingTypeParam } from "../../../../../lib/search";
 
 type RouteParams = {
   listingType: string;
@@ -24,6 +25,16 @@ export async function generateMetadata({
   params: Promise<RouteParams>;
 }>): Promise<Metadata> {
   const { listingType, areaSlug } = await params;
+  const normalizedListingType = parseListingTypeParam(listingType);
+
+  if (!normalizedListingType) {
+    return createMetadata({
+      title: "Search not found",
+      description: "The requested search route could not be found.",
+      path: "/search"
+    });
+  }
+
   const area = await getSeoLocationBySlug(areaSlug);
 
   if (!area) {
@@ -31,13 +42,11 @@ export async function generateMetadata({
       title: "Search not found",
       description: "The requested search route could not be found.",
       path: buildSearchPath({
-        listingType: listingType === "sale" ? "sale" : "rent",
+        listingType: normalizedListingType,
         areaSlug
       })
     });
   }
-
-  const normalizedListingType = listingType === "sale" ? "sale" : "rent";
 
   return createMetadata({
     title: `${normalizedListingType === "sale" ? "Properties for Sale" : "Properties for Rent"} in ${area.areaName}`,
@@ -60,13 +69,17 @@ export default async function AreaSearchPage({
     params,
     Promise.resolve(searchParams ?? {})
   ]);
+  const normalizedListingType = parseListingTypeParam(listingType);
+
+  if (!normalizedListingType) {
+    notFound();
+  }
+
   const area = await getSeoLocationBySlug(areaSlug);
 
   if (!area) {
     notFound();
   }
-
-  const normalizedListingType = listingType === "sale" ? "sale" : "rent";
   const relatedAreas = await listRelatedSeoLocations(area.slug, area.district, 4);
   const paramsForSearch = new URLSearchParams();
   paramsForSearch.set("listingType", normalizedListingType);
